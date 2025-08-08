@@ -1,0 +1,33 @@
+node_modules/
+package-lock.json
+yarn.lock
+
+functions/.env*
+functions/node_modules/
+functions/.package-lock.json
+
+# Firebase local state and emulator files
+.firebase/
+.firebaserc
+firebase-debug.log
+
+# macOS and editor files
+.DS_Store
+.vscode/
+
+# Vite/React build output
+react-app/dist/
+react-app/node_modules/
+react-app/.vite/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files for React app
+react-app/.env*
+
+# General backup or temp files
+*~
+*.swp
