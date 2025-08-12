@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite';
 
 const env = loadEnv('', process.cwd(), '');
-const projectName = env.FIREBASE_PROJECT_ID || 'default-project-name';
+const projectName = env.FIREBASE_PROJECT_ID || "default-project-name";
+const region = env.FIREBASE_FUNCTIONS_REGION || "region1";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,7 +16,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: `http://localhost:5001/${projectName}/us-central1`,
+        target: `http://localhost:5001/${projectName}/${region}`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },

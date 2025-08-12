@@ -1,10 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Chat from "./Chat";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import './App.css';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "./App.css";
+import useChatStore from "./utils/useChatStore";
 
 function App() {
+  useEffect(() => {
+    // Fetch supported models when the app loads
+    useChatStore.getState().getSupportedModels();
+  }, []);
+
   return (
     <div className="d-flex" style={{ minHeight: "100vh", width: "100vw" }}>
       {/* Sidebar */}

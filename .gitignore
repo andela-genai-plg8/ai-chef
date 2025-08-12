@@ -2,6 +2,7 @@ node_modules/
 package-lock.json
 yarn.lock
 
+functions/lib/
 functions/.env*
 functions/node_modules/
 functions/.package-lock.json
