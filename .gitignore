@@ -32,3 +32,4 @@ react-app/.env*
 # General backup or temp files
 *~
 *.swp
+public/
