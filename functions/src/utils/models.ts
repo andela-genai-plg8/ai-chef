@@ -1,6 +1,9 @@
-export const MODELS = {
+import { SupportedModels } from "../../../sharedtypes/Model";
+
+export const MODELS: SupportedModels = {
   gpt: {
     title: "GPT",
+    supported: true,
     models: {
       "gpt-4o-mini": {
         max_tokens: 1024,
@@ -42,6 +45,7 @@ export const MODELS = {
   },
   gemini: {
     title: "Gemini",
+    supported: false,
     models: {
       "gemini-1": {
         max_tokens: 32768,
@@ -77,6 +81,7 @@ export const MODELS = {
   },
   claude: {
     title: "Claude",
+    supported: false,
     models: {
       "claude-3-opus-20240229": {
         max_tokens: 200000,
@@ -100,6 +105,7 @@ export const MODELS = {
   },
   grok: {
     title: "Grok",
+    supported: false,
     models: {
       "grok-1": {
         max_tokens: 128000,
