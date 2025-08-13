@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import useChatStore from "./utils/useChatStore";
+import useChatStore from "@utils/useChatStore";
 
 const widgetStyle = {
   position: "fixed",

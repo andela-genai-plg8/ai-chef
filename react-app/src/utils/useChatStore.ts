@@ -1,22 +1,8 @@
 import { create } from "zustand";
+import { ChatMessage } from "@sharedTypes/ChatMessage";
+import { SupportedModels } from "@sharedTypes/SupportedModels";
 
-export type ChatMessage = {
-  sender: string;
-  text: string;
-};
 
-export type SupportedModels = {
-  [provider: string]: {
-    title: string;
-    models: {
-      [modelId: string]: {
-        id?: string;
-        value?: string;
-        title: string;
-      };
-    };
-  };
-};
 
 export interface ChatStore {
   messages: ChatMessage[];
@@ -29,7 +15,7 @@ export interface ChatStore {
   setCurrentModel: (model: string) => void;
   setSupportedModels: (models: SupportedModels) => void;
   getSupportedModels: () => Promise<SupportedModels>;
-  sendMessage: (input: string) => Promise<void>;
+  sendMessage: (input?: string) => Promise<void>;
 }
 import axios from "axios";
 
@@ -72,7 +58,8 @@ const useChatStore = create<ChatStore>((set, get) => ({
   sendMessage: async (input) => {
     const state = get();
     if (state.messages.length === 0 || state.sending) return;
-    const userMsg = { sender: "user", text: input };
+    const userMsg = { sender: "user", text: input || "" };
+
     // Change any role from 'initial' to 'user' before sending
     let newMessages = [...state.messages, userMsg]
       .filter((msg) => msg.text?.length > 0)

@@ -15,8 +15,18 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@components/*": ["components/*"],
+      "@utils/*": ["utils/*"],
+      "@assets/*": ["assets/*"],
+      "@sharedTypes/*": ["../sharedtypes/*"]
+    },
+        // "outDir": "build", // Removed outDir
   },
-  "include": ["src"],
+      "noEmit": true,
+  "include": ["src", "../sharedtypes"],
   "exclude": ["node_modules"]
 }
