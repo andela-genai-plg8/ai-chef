@@ -23,7 +23,7 @@ const CONTEXT_WINDOW_SIZE = 10;
 
 const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
-  currentModel: "gpt-4o",
+  currentModel: "gpt-gpt-4o",
   sending: false,
   gettingModels: false,
   supportedModels: {},
@@ -38,23 +38,36 @@ const useChatStore = create<ChatStore>((set, get) => ({
     }),
   setCurrentModel: (model) => set({ currentModel: model }),
   setSupportedModels: (models) => set({ supportedModels: models }),
-  getSupportedModels: async () => {
-    const current = get().supportedModels;
-    if (current && Object.keys(current).length > 0) {
-      return current;
-    }
-    set((state) => ({ ...state, gettingModels: true }));
-    try {
-      const res = await axios.get("/api/models");
-      set({ supportedModels: res.data });
-      return res.data;
-    } catch {
-      set({ supportedModels: {} });
-      return {};
-    } finally {
-      set((state) => ({ ...state, gettingModels: false }));
-    }
-  },
+  getSupportedModels: (() => {
+    let lastCall = 0;
+    let pendingPromise: Promise<SupportedModels> | null = null;
+    return async () => {
+      const now = Date.now();
+      if (pendingPromise && now - lastCall < 500) {
+        return pendingPromise;
+      }
+      lastCall = now;
+      const current = get().supportedModels;
+      if (current && Object.keys(current).length > 0) {
+        return current;
+      }
+      set((state) => ({ ...state, gettingModels: true }));
+      pendingPromise = axios.get("/api/models")
+        .then((res) => {
+          set({ supportedModels: res.data });
+          return res.data;
+        })
+        .catch(() => {
+          set({ supportedModels: {} });
+          return {};
+        })
+        .finally(() => {
+          set((state) => ({ ...state, gettingModels: false }));
+          pendingPromise = null;
+        });
+      return pendingPromise;
+    };
+  })(),
   sendMessage: async (input) => {
     const state = get();
     if (state.messages.length === 0 || state.sending) return;

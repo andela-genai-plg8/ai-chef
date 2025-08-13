@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import useChatStore from "@utils/useChatStore";
 
-const widgetStyle = {
+const widgetStyle: React.CSSProperties = {
   position: "fixed",
   bottom: 24,
   right: 24,
@@ -14,7 +14,7 @@ const widgetStyle = {
   background: "#fff",
 };
 
-const toggleBtnStyle = {
+const toggleBtnStyle: React.CSSProperties = {
   position: "fixed",
   bottom: 24,
   right: 24,
@@ -36,12 +36,13 @@ const toggleBtnStyle = {
 const Chat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  // const [selectedModel, setSelectedModel] = useState("gpt-4o");
   const [open, setOpen] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const messages = useChatStore((state) => state.messages);
+  const currentModel = useChatStore((state) => state.currentModel);
   const setCurrentModel = useChatStore((state) => state.setCurrentModel);
   const supportedModels = useChatStore((state) => state.supportedModels);
   const sendMessage = useChatStore((state) => state.sendMessage);
@@ -52,10 +53,6 @@ const Chat = () => {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, open]);
-
-  useEffect(() => {
-    setCurrentModel(selectedModel);
-  }, [selectedModel, setCurrentModel]);
 
   const handleSend = async () => {
     setLoading(true);
@@ -75,26 +72,30 @@ const Chat = () => {
     }
   }, [supportedModels, messages.length, sendMessage, addMessage, open]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSend();
   };
 
   const renderModelDropdown = useMemo(() => {
     if (!supportedModels || Object.keys(supportedModels).length === 0) {
-      return <option value="gpt-4o">gpt-4o</option>;
+      return <option value="gpt-gpt-4o">GPT 4 - Omni</option>;
     }
-    return Object.entries(supportedModels).map(([groupKey, group]) => (
-      <optgroup key={groupKey} label={group.title}>
-        {Object.keys(group.models).map((modelKey) => {
-          const model = group.models[modelKey];
-          return (
-            <option key={model.id || model.value || model.title} value={model.id || model.value || model.title}>
-              {model.title}
-            </option>
-          );
-        })}
-      </optgroup>
-    ));
+    return Object.entries(supportedModels).map(([groupKey, group]) => {
+      // Type assertion for group
+      const typedGroup = group as { title: string; models: Record<string, any> };
+      return (
+        <optgroup key={groupKey} label={typedGroup.title}>
+          {Object.keys(typedGroup.models).map((modelKey) => {
+            const model = typedGroup.models[modelKey];
+            return (
+              <option key={model.id || model.value || model.title} value={modelKey}>
+                {model.title}
+              </option>
+            );
+          })}
+        </optgroup>
+      );
+    });
   }, [supportedModels]);
 
   // Floating widget toggle button
@@ -122,8 +123,8 @@ const Chat = () => {
       <div className="mb-2 px-3">
         <select
           className="form-select form-select-sm"
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
+          value={currentModel}
+          onChange={(e) => setCurrentModel(e.target.value)}
         >
           {renderModelDropdown}
         </select>
