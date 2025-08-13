@@ -1,16 +1,48 @@
 import { create } from "zustand";
+
+export type ChatMessage = {
+  sender: string;
+  text: string;
+};
+
+export type SupportedModels = {
+  [provider: string]: {
+    title: string;
+    models: {
+      [modelId: string]: {
+        id?: string;
+        value?: string;
+        title: string;
+      };
+    };
+  };
+};
+
+export interface ChatStore {
+  messages: ChatMessage[];
+  currentModel: string;
+  sending: boolean;
+  gettingModels: boolean;
+  supportedModels: SupportedModels;
+  setMessages: (messages: ChatMessage[]) => void;
+  addMessage: (msg: ChatMessage) => void;
+  setCurrentModel: (model: string) => void;
+  setSupportedModels: (models: SupportedModels) => void;
+  getSupportedModels: () => Promise<SupportedModels>;
+  sendMessage: (input: string) => Promise<void>;
+}
 import axios from "axios";
 
 const CONTEXT_WINDOW_SIZE = 10;
 
-const useChatStore = create((set, get) => ({
+const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
   currentModel: "gpt-4o",
   sending: false,
   gettingModels: false,
   supportedModels: {},
-  setMessages: (messages) => set({ messages }),
-  addMessage: (msg) =>
+  setMessages: (messages: ChatMessage[]) => set({ messages }),
+  addMessage: (msg: ChatMessage) =>
     set((state) => {
       const lastMsg = state.messages[state.messages.length - 1];
       if (lastMsg && lastMsg.sender === "initial" && msg.sender === "initial" && lastMsg.text === msg.text) {
@@ -65,7 +97,8 @@ const useChatStore = create((set, get) => ({
       const data = await res.json();
       get().setMessages([...get().messages, { sender: "assistant", text: data.output || data.error }]);
     } catch (err) {
-      get().setMessages([...get().messages, { sender: "assistant", text: "Error: " + err.message }]);
+      const errorMsg = typeof err === "object" && err !== null && "message" in err ? (err as { message: string }).message : String(err);
+      get().setMessages([...get().messages, { sender: "assistant", text: "Error: " + errorMsg }]);
     } finally {
       set((state) => ({ ...state, sending: false }));
     }

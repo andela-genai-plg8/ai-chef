@@ -175,3 +175,4 @@ const Chat = () => {
 };
 
 export default Chat;
+// Renamed from Chat.jsx to Chat.tsx

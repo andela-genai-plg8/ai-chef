@@ -44,4 +44,5 @@ function App() {
   );
 }
 
-export default App;
+  export default App;
+// Renamed from App.jsx to App.tsx
