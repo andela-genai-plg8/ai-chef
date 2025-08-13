@@ -2,10 +2,42 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import useChatStore from "./utils/useChatStore";
 
+const widgetStyle = {
+  position: "fixed",
+  bottom: 24,
+  right: 24,
+  zIndex: 9999,
+  maxWidth: 400,
+  width: "100%",
+  boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+  borderRadius: 16,
+  background: "#fff",
+};
+
+const toggleBtnStyle = {
+  position: "fixed",
+  bottom: 24,
+  right: 24,
+  zIndex: 10000,
+  borderRadius: "50%",
+  width: 56,
+  height: 56,
+  background: "#198754",
+  color: "#fff",
+  border: "none",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 28,
+  cursor: "pointer",
+};
+
 const Chat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  const [open, setOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -16,11 +48,10 @@ const Chat = () => {
   const addMessage = useChatStore((state) => state.addMessage);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
-    if (messagesEndRef.current) {
+    if (open && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, open]);
 
   useEffect(() => {
     setCurrentModel(selectedModel);
@@ -37,19 +68,17 @@ const Chat = () => {
     }
   };
 
-  // send a blank message in a useeffect
   useEffect(() => {
-    if (messages.length === 0) {
+    if (open && messages.length === 0) {
       addMessage({ sender: "initial", text: "Hello" });
       sendMessage();
     }
-  }, [supportedModels, messages.length, sendMessage, addMessage]);
+  }, [supportedModels, messages.length, sendMessage, addMessage, open]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSend();
   };
 
-  // Memoize model dropdown rendering
   const renderModelDropdown = useMemo(() => {
     if (!supportedModels || Object.keys(supportedModels).length === 0) {
       return <option value="gpt-4o">gpt-4o</option>;
@@ -58,7 +87,6 @@ const Chat = () => {
       <optgroup key={groupKey} label={group.title}>
         {Object.keys(group.models).map((modelKey) => {
           const model = group.models[modelKey];
-
           return (
             <option key={model.id || model.value || model.title} value={model.id || model.value || model.title}>
               {model.title}
@@ -69,12 +97,31 @@ const Chat = () => {
     ));
   }, [supportedModels]);
 
+  // Floating widget toggle button
+  if (!open) {
+    return (
+      <button style={toggleBtnStyle} onClick={() => setOpen(true)} title="Chat with Chef">
+        <span role="img" aria-label="chef">👨‍🍳</span>
+      </button>
+    );
+  }
+
   return (
-    <div className="container py-4 d-flex flex-column align-items-center" style={{ maxWidth: 600, width: 600 }}>
-      <h2 className="mb-4">Food Central</h2>
-      <div className="mb-3 w-100">
+    <div style={widgetStyle}>
+      <div className="d-flex justify-content-between align-items-center px-3 pt-3 pb-1">
+        <h5 className="mb-0">Chef</h5>
+        <button
+          className="btn btn-sm btn-outline-secondary"
+          style={{ borderRadius: "50%", width: 32, height: 32, padding: 0, fontSize: 20 }}
+          onClick={() => setOpen(false)}
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div className="mb-2 px-3">
         <select
-          className="form-select"
+          className="form-select form-select-sm"
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
         >
@@ -82,8 +129,8 @@ const Chat = () => {
         </select>
       </div>
       <div
-        className="flex-grow-1 w-100 d-flex flex-column border rounded p-3 mb-3 bg-light"
-        style={{ minHeight: 350, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}
+        className="flex-grow-1 d-flex flex-column border rounded p-2 mb-2 bg-light"
+        style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", overflowX: "hidden" }}
       >
         {messages
           .filter((msg) => msg.sender !== "initial")
@@ -91,9 +138,7 @@ const Chat = () => {
             <div
               key={i}
               className={`mb-2 text-start text-${msg.sender === "user" ? "end" : "start"}`}
-              style={{
-                maxWidth: "70%",
-              }}
+              style={{ maxWidth: "70%" }}
             >
               <span
                 className={`badge bg-${msg.sender === "user" ? "primary" : "secondary"} text-break"`}
@@ -110,10 +155,10 @@ const Chat = () => {
           ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="input-group w-100">
+      <div className="input-group px-3 pb-3">
         <input
           type="text"
-          className="form-control"
+          className="form-control form-control-sm"
           placeholder="Type your message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -121,7 +166,7 @@ const Chat = () => {
           disabled={loading}
           ref={inputRef}
         />
-        <button className="btn btn-success" onClick={handleSend} disabled={loading}>
+        <button className="btn btn-success btn-sm" onClick={handleSend} disabled={loading}>
           {loading ? "..." : "Send"}
         </button>
       </div>
