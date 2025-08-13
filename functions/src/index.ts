@@ -10,7 +10,7 @@ export const chat = functions.https.onRequest(async (req: Request, res: Response
   try {
     const chef = new ChefAgent(
       "Andel",
-      "gpt-4o-mini",
+      req.body.model,
       context.map((msg) => ({ role: msg.sender, content: msg.text }))
     );
 

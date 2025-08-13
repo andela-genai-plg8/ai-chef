@@ -5,13 +5,13 @@ export const MODELS: SupportedModels = {
     title: "GPT",
     supported: true,
     models: {
-      "gpt-4o-mini": {
+      "gpt-gpt-4o-mini": {
         max_tokens: 1024,
         temperature: 0.7,
         title: "GPT-4o Mini",
         provider: "openai",
       },
-      "gpt-4o": {
+      "gpt-gpt-4o": {
         max_tokens: 2048,
         temperature: 0.7,
         title: "GPT-4o",
@@ -23,7 +23,7 @@ export const MODELS: SupportedModels = {
         title: "GPT-4 Turbo",
         provider: "openai",
       },
-      "gpt-4": {
+      "gpt-gpt-4-turbo": {
         max_tokens: 8192,
         temperature: 0.7,
         title: "GPT-4",
@@ -35,7 +35,7 @@ export const MODELS: SupportedModels = {
         title: "GPT-3.5 Turbo",
         provider: "openai",
       },
-      "gpt-3.5-turbo-16k": {
+      "gpt-gpt-3.5-turbo": {
         max_tokens: 16384,
         temperature: 0.7,
         title: "GPT-3.5 Turbo 16k",
@@ -47,7 +47,7 @@ export const MODELS: SupportedModels = {
     title: "Gemini",
     supported: false,
     models: {
-      "gemini-1": {
+      "google-gemini-1": {
         max_tokens: 32768,
         temperature: 0.7,
         title: "Gemini 1",
@@ -59,7 +59,7 @@ export const MODELS: SupportedModels = {
         title: "Gemini 1.5 Pro",
         provider: "google",
       },
-      "gemini-1.5-flash": {
+      "google-gemini-1.5-pro": {
         max_tokens: 32768,
         temperature: 0.7,
         title: "Gemini 1.5 Flash",
@@ -71,7 +71,7 @@ export const MODELS: SupportedModels = {
         title: "Gemini Pro",
         provider: "google",
       },
-      "gemini-pro-vision": {
+      "google-gemini-pro": {
         max_tokens: 30720,
         temperature: 0.7,
         title: "Gemini Pro Vision",
@@ -83,7 +83,7 @@ export const MODELS: SupportedModels = {
     title: "Claude",
     supported: false,
     models: {
-      "claude-3-opus-20240229": {
+      "anthropic-claude-3-opus-20240229": {
         max_tokens: 200000,
         temperature: 0.7,
         title: "Claude 3 Opus",
@@ -95,7 +95,7 @@ export const MODELS: SupportedModels = {
         title: "Claude 3 Sonnet",
         provider: "anthropic",
       },
-      "claude-3-haiku-20240307": {
+      "anthropic-claude-3-haiku-20240307": {
         max_tokens: 200000,
         temperature: 0.7,
         title: "Claude 3 Haiku",
@@ -107,7 +107,7 @@ export const MODELS: SupportedModels = {
     title: "Grok",
     supported: false,
     models: {
-      "grok-1": {
+      "xai-grok-1": {
         max_tokens: 128000,
         temperature: 0.7,
         title: "Grok-1",
@@ -119,11 +119,24 @@ export const MODELS: SupportedModels = {
         title: "Grok-1.5",
         provider: "xai",
       },
-      "grok-1.5v": {
+      "xai-grok-1.5": {
         max_tokens: 128000,
         temperature: 0.7,
         title: "Grok-1.5V",
         provider: "xai",
+      },
+    },
+  },
+  ollama: {
+    title: "Ollama",
+    supported: true,
+    models: {
+      "ollama-llama3.2": {
+        max_tokens: 8192,
+        temperature: 0.7,
+        title: "Llama 3.2",
+        provider: "ollama",
+        supported: true,
       },
     },
   },

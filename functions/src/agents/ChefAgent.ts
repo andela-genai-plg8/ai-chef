@@ -1,4 +1,5 @@
 import { OpenAI, ChatCompletionMessageParam } from "openai";
+import ollama from "ollama";
 
 export type ChatHistory = ChatCompletionMessageParam[];
 
@@ -6,7 +7,7 @@ export class ChefAgent {
   private name: string;
   private model: string;
   private history: ChatHistory;
-  private openai: OpenAI;
+  private openai?: OpenAI;
 
   constructor(name: string, model: string, history: ChatHistory = []) {
     this.name = name;
@@ -24,18 +25,47 @@ Try to always start by introducing yourself.
       },
       ...history,
     ];
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
+
+    // Initialize OpenAI client only if the model is compatible
+    if (model.startsWith("gpt-")) this.openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
   }
 
   async getResponse(prompt?: string): Promise<string> {
-    // Add the new user message to the conversation history
     if (prompt) this.history.push({ role: "user", content: prompt });
 
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: this.history,
-    });
+    if (this.model.startsWith("ollama-")) {
+      // Use Ollama local API
+      const response = await ollama.chat({
+        model: this.model.substring(7), // or any model you've pulled
+        messages: this.history,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "get_current_weather",
+              description: "Get the current weather for a city",
+              parameters: {
+                type: "object",
+                properties: {
+                  city: { type: "string", description: "City name" },
+                },
+                required: ["city"],
+              },
+            },
+          },
+        ],
+      });
 
-    return response.choices[0]?.message?.content || "";
+      return response.message.content || "";
+    } else if (this.model.startsWith("gpt-") && this.openai) {
+      // Use OpenAI
+      const response = await this.openai.chat.completions.create({
+        model: this.model.substring(4),
+        messages: this.history,
+      });
+      return response.choices[0]?.message?.content || "";
+    }
+
+    throw new Error("No valid model found");
   }
 }
