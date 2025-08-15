@@ -1,4 +1,4 @@
-import { SupportedModels } from "../../../sharedtypes/Model";
+import { SupportedModels } from "shared-types";
 
 export const MODELS: SupportedModels = {
   gpt: {
@@ -17,22 +17,10 @@ export const MODELS: SupportedModels = {
         title: "GPT-4o",
         provider: "openai",
       },
-      "gpt-4-turbo": {
-        max_tokens: 128000,
-        temperature: 0.7,
-        title: "GPT-4 Turbo",
-        provider: "openai",
-      },
       "gpt-gpt-4-turbo": {
         max_tokens: 8192,
         temperature: 0.7,
         title: "GPT-4",
-        provider: "openai",
-      },
-      "gpt-3.5-turbo": {
-        max_tokens: 4096,
-        temperature: 0.7,
-        title: "GPT-3.5 Turbo",
         provider: "openai",
       },
       "gpt-gpt-3.5-turbo": {
@@ -43,34 +31,10 @@ export const MODELS: SupportedModels = {
       },
     },
   },
-  gemini: {
+  google: {
     title: "Gemini",
     supported: false,
     models: {
-      "google-gemini-1": {
-        max_tokens: 32768,
-        temperature: 0.7,
-        title: "Gemini 1",
-        provider: "google",
-      },
-      "gemini-1.5-pro": {
-        max_tokens: 32768,
-        temperature: 0.7,
-        title: "Gemini 1.5 Pro",
-        provider: "google",
-      },
-      "google-gemini-1.5-pro": {
-        max_tokens: 32768,
-        temperature: 0.7,
-        title: "Gemini 1.5 Flash",
-        provider: "google",
-      },
-      "gemini-pro": {
-        max_tokens: 30720,
-        temperature: 0.7,
-        title: "Gemini Pro",
-        provider: "google",
-      },
       "google-gemini-pro": {
         max_tokens: 30720,
         temperature: 0.7,
@@ -136,7 +100,7 @@ export const MODELS: SupportedModels = {
         temperature: 0.7,
         title: "Llama 3.2",
         provider: "ollama",
-        supported: true,
+        supported: true
       },
     },
   },
