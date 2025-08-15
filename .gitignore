@@ -34,3 +34,4 @@ react-app/.env*
 *.swp
 public/
 sharedtypes/*.js
+firebase.json
