@@ -35,3 +35,4 @@ react-app/.env*
 public/*
 sharedtypes/*.js
 firebase.json
+public/index.html
