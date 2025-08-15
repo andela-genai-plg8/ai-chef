@@ -32,6 +32,6 @@ react-app/.env*
 # General backup or temp files
 *~
 *.swp
-public/
+public/*
 sharedtypes/*.js
 firebase.json
