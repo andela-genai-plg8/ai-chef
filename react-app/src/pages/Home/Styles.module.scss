@@ -1,0 +1,49 @@
+.Home {
+  width: 100%;
+  padding: 1rem;
+
+  .home-tab-container {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: #fff;
+    width: calc(100% - 0px);
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .home-tab-btn-left {
+    flex: 1;
+    font-size: 1.1rem;
+    border-radius: 8px 0 0 8px;
+  }
+
+  .home-tab-btn-right {
+    flex: 1;
+    font-size: 1.1rem;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .home-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .home-tag {
+    font-size: 1rem;
+    padding: 0.5em 0.75em;
+    border-radius: 20px;
+  }
+
+  .home-tag-close {
+    font-size: 0.8rem;
+    margin-left: 0.5em;
+  }
+}

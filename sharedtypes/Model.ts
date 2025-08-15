@@ -5,6 +5,8 @@ export type Model = {
   provider?: string;
   max_tokens?: number;
   temperature?: number;
+  supported?: boolean;
+  default?: boolean;
 };
 
 export type SupportedModels = {

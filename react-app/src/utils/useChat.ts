@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import { ChatMessage } from "@sharedTypes/ChatMessage";
-import { SupportedModels } from "@sharedTypes/SupportedModels";
-
-
+import { ChatMessage, SupportedModels } from "shared-types";
 
 export interface ChatStore {
   messages: ChatMessage[];
@@ -31,7 +28,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
   addMessage: (msg: ChatMessage) =>
     set((state) => {
       const lastMsg = state.messages[state.messages.length - 1];
-      if (lastMsg && lastMsg.sender === "initial" && msg.sender === "initial" && lastMsg.text === msg.text) {
+      if (lastMsg && lastMsg.sender === "initial" && msg.sender === "initial" && lastMsg.content === msg.content) {
         return {};
       }
       return { messages: [...state.messages, msg] };
@@ -52,9 +49,26 @@ const useChatStore = create<ChatStore>((set, get) => ({
         return current;
       }
       set((state) => ({ ...state, gettingModels: true }));
-      pendingPromise = axios.get("/api/models")
+      pendingPromise = axios
+        .get("/api/models")
         .then((res) => {
-          set({ supportedModels: res.data });
+          // get the name of the default model
+          const currentModel = Object.values(res.data).reduce((acc: string, group: any) => {
+            const modelGroup = group as {
+              title: string;
+              supported: boolean;
+              models: { [modelId: string]: { name: string; default?: boolean } };
+            };
+            Object.keys(modelGroup.models).forEach((modelKey) => {
+              const model = modelGroup.models[modelKey];
+              if (model.default) {
+                acc = model.name;
+              }
+            });
+            return acc;
+          }, "");
+
+          set({ supportedModels: res.data, currentModel });
           return res.data;
         })
         .catch(() => {
@@ -68,19 +82,19 @@ const useChatStore = create<ChatStore>((set, get) => ({
       return pendingPromise;
     };
   })(),
-  sendMessage: async (input) => {
+  sendMessage: async (prompt) => {
     const state = get();
     if (state.messages.length === 0 || state.sending) return;
-    const userMsg = { sender: "user", text: input || "" };
+    const userMsg = { sender: "user", content: prompt || "" };
 
     // Change any role from 'initial' to 'user' before sending
     let newMessages = [...state.messages, userMsg]
-      .filter((msg) => msg.text?.length > 0)
+      .filter((msg) => msg.content?.length > 0)
       .map((msg) => (msg.sender === "initial" ? { ...msg, sender: "user" } : msg));
 
-    // Prevent consecutive 'initial' messages with same text
+    // Prevent consecutive 'initial' messages with same content
     newMessages = newMessages.filter((msg, idx, arr) => {
-      if (idx > 0 && msg.sender === "initial" && arr[idx - 1].sender === "initial" && arr[idx - 1].text === msg.text) {
+      if (idx > 0 && msg.sender === "initial" && arr[idx - 1].sender === "initial" && arr[idx - 1].content === msg.content) {
         return false;
       }
       return true;
@@ -89,16 +103,20 @@ const useChatStore = create<ChatStore>((set, get) => ({
     try {
       const contextWindow = newMessages.slice(-CONTEXT_WINDOW_SIZE);
       set((state) => ({ ...state, sending: true }));
+
+      const state = get();
+      console.log("Sending message:", prompt, state);
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: input, context: contextWindow, model: get().currentModel }),
+        body: JSON.stringify({ prompt: prompt, context: contextWindow, model: state.currentModel }),
       });
       const data = await res.json();
-      get().setMessages([...get().messages, { sender: "assistant", text: data.output || data.error }]);
+      get().setMessages([...get().messages, { sender: "assistant", content: data.messages || data.error }]);
     } catch (err) {
       const errorMsg = typeof err === "object" && err !== null && "message" in err ? (err as { message: string }).message : String(err);
-      get().setMessages([...get().messages, { sender: "assistant", text: "Error: " + errorMsg }]);
+      get().setMessages([...get().messages, { sender: "assistant", content: "Error: " + errorMsg }]);
     } finally {
       set((state) => ({ ...state, sending: false }));
     }

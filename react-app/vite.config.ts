@@ -18,11 +18,12 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src'),
-        '@components': resolve(__dirname, 'src/components'),
-        '@utils': resolve(__dirname, 'src/utils'),
-        '@assets': resolve(__dirname, 'src/assets'),
-        '@sharedTypes': resolve(__dirname, '../sharedtypes'),
+        "@": resolve(__dirname, "src"),
+        "@components": resolve(__dirname, "src/components"),
+        "@pages": resolve(__dirname, "src/pages"),
+        "@utils": resolve(__dirname, "src/utils"),
+        "@assets": resolve(__dirname, "src/assets"),
+        "@sharedTypes": resolve(__dirname, "../sharedtypes"),
       },
     },
     build: {

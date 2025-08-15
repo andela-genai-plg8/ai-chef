@@ -1,10 +1,16 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
-import Chat from "./Chat";
+import Chat from "./components/Chat/Chat";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./App.css";
-import useChatStore from "./utils/useChatStore";
+
+import "@/firebase";
+import useChatStore from "@utils/useChat";
+import Home from "@/pages/Home/Home";
+import RecipePage from "@/pages/RecipePage/RecipePage";
+import Login from "@/pages/Login/Login";
+import AllRecipes from "./pages/AllRecipes/AllRecipes";
 
 function App() {
   useEffect(() => {
@@ -38,10 +44,12 @@ function App() {
         </ul>
       </nav>
       {/* Main Content */}
-      <main className="flex-grow-1 d-flex align-items-center justify-content-center bg-light" style={{ minHeight: "100vh", width: "calc(100vw - 70px)" }}>
+      <main className="flex-grow-1 d-flex align-items-start justify-content-center bg-light" style={{ minHeight: "100vh", width: "calc(100vw - 70px)" }}>
         <Routes>
-          <Route path="/" element={<div>Welcome to Food Central!</div>} />
-          <Route path="/recipes" element={<div>Recipes page coming soon!</div>} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/recipes" element={<AllRecipes />} />
+          <Route path="/recipe/:id" element={<RecipePage />} />
           <Route path="/settings" element={<div>Settings page coming soon!</div>} />
         </Routes>
       </main>
@@ -50,5 +58,5 @@ function App() {
   );
 }
 
-  export default App;
+export default App;
 // Renamed from App.jsx to App.tsx

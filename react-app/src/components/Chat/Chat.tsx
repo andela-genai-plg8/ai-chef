@@ -1,37 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import useChatStore from "@utils/useChatStore";
-
-const widgetStyle: React.CSSProperties = {
-  position: "fixed",
-  bottom: 24,
-  right: 24,
-  zIndex: 9999,
-  maxWidth: 400,
-  width: "100%",
-  boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-  borderRadius: 16,
-  background: "#fff",
-};
-
-const toggleBtnStyle: React.CSSProperties = {
-  position: "fixed",
-  bottom: 24,
-  right: 24,
-  zIndex: 10000,
-  borderRadius: "50%",
-  width: 56,
-  height: 56,
-  background: "#198754",
-  color: "#fff",
-  border: "none",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 28,
-  cursor: "pointer",
-};
+import useChatStore from "@/utils/useChat";
+import styles from "./Styles.module.scss";
 
 const Chat = () => {
   const [input, setInput] = useState("");
@@ -56,7 +26,7 @@ const Chat = () => {
 
   const handleSend = async () => {
     setLoading(true);
-    addMessage({ sender: "user", text: input });
+    addMessage({ sender: "user", content: input });
     await sendMessage();
     setInput("");
     setLoading(false);
@@ -67,7 +37,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      addMessage({ sender: "initial", text: "Hello" });
+      addMessage({ sender: "initial", content: "Hello" });
       sendMessage();
     }
   }, [supportedModels, messages.length, sendMessage, addMessage, open]);
@@ -101,19 +71,18 @@ const Chat = () => {
   // Floating widget toggle button
   if (!open) {
     return (
-      <button style={toggleBtnStyle} onClick={() => setOpen(true)} title="Chat with Chef">
+      <button className={styles.ToggleButton} onClick={() => setOpen(true)} title="Chat with Chef">
         <span role="img" aria-label="chef">👨‍🍳</span>
       </button>
     );
   }
 
   return (
-    <div style={widgetStyle}>
+    <div className={styles.Chat}>
       <div className="d-flex justify-content-between align-items-center px-3 pt-3 pb-1">
         <h5 className="mb-0">Chef</h5>
         <button
-          className="btn btn-sm btn-outline-secondary"
-          style={{ borderRadius: "50%", width: 32, height: 32, padding: 0, fontSize: 20 }}
+          className={styles.CloseButton}
           onClick={() => setOpen(false)}
           title="Close"
         >
@@ -150,7 +119,7 @@ const Chat = () => {
                   whiteSpace: "pre-line",
                 }}
               >
-                {msg.text}
+                {msg.content}
               </span>
             </div>
           ))}
