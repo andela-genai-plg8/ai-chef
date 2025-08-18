@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import useChatStore from "@/utils/useChat";
+import useChatStore from "@/hooks/useChat";
 import styles from "./Styles.module.scss";
 
 const Chat = () => {

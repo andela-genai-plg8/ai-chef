@@ -1,6 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { getRemoteConfig } from "firebase/remote-config";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "firebase/firestore";
 
 // Extend ImportMeta to include env property for Vite
 interface ImportMetaEnv {
@@ -29,10 +28,39 @@ const firebaseConfig = {
 
 if (!(getApps().length > 0)) {
   initializeApp(firebaseConfig);
+
   // add a message message to the user collection in firestore
-  // const db = getFirestore();
-  // const userCollection = collection(db, "users");
-  // await addDoc(userCollection, {
-  //   message: "User created",
+  const db = getFirestore();
+  const recipeCollection = collection(db, "recipes");
+
+  // // for every recipe in the collection, update it by adding a slug property formed by the lowercased name
+  // onSnapshot(recipeCollection, (snapshot) => {
+  //   snapshot.docs.forEach((docSnap) => {
+  //     const recipe = docSnap.data();
+  //     const slug = recipe.name.toLowerCase().replace(/\s+/g, "-");
+  //     const recipeDocRef = doc(recipeCollection, docSnap.id);
+  //     updateDoc(recipeDocRef, { slug });
+  //   });
   // });
+
+  // recipeCollection.
+  // [
+  //   {
+  //       "name": "Savory Slow Roasted Tomatoes with Filet of Anchovy",
+  //       "image": "https://img.spoonacular.com/recipes/631757-312x231.jpg",
+  //       "ingredients": [
+  //           {
+  //               "name": "anchovy filets",
+  //               "quantity": "8"
+  //           }
+  //       ],
+  //       "instructions": [
+  //           {
+  //               "step": 1,
+  //               "instruction": "Slow roast tomatoes with anchovy filets.",
+  //               "duration": 1200
+  //           }
+  //       ]
+  //   },
+  // ].map((recipe) => addDoc(recipeCollection, recipe));
 }

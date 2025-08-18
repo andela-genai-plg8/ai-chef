@@ -22,8 +22,8 @@
       "@components/*": ["components/*"],
       "@pages/*": ["pages/*"],
       "@utils/*": ["utils/*"],
-      "@assets/*": ["assets/*"],
-      "@sharedTypes/*": ["../sharedtypes/*"]
+      "@hooks/*": ["hooks/*"],
+      "@assets/*": ["assets/*"]
     },
         // "outDir": "build", // Removed outDir
   },

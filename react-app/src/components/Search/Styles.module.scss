@@ -1,0 +1,106 @@
+@import "@/index.module.scss";
+
+.Search {
+  width: 100%;
+
+  .HomeTabContainer {
+    @extend .btn-group;
+    @extend .mb-3;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    width: calc(100% - 0px);
+    margin-left: auto;
+    margin-right: auto;
+
+    .HomeTabBtnLeft {
+      @extend .btn;
+      @extend .btn-sm;
+      /* tab-btn is a project-specific helper in global css; extend if present */
+      // @extend .tab-btn;
+      flex: 1;
+      font-size: 1.1rem;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .HomeTabBtnRight {
+      @extend .btn;
+      @extend .btn-outline-primary;
+      @extend .btn-sm;
+      // @extend .tab-btn;
+      flex: 1;
+      font-size: 1.1rem;
+      border-radius: 0 8px 8px 0;
+    }
+  }
+
+  .HomeTagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .HomeTag {
+    @extend .badge;
+    @extend .bg-primary;
+    @extend .text-light;
+    @extend .d-flex;
+    @extend .align-items-center;
+    font-size: 1rem;
+    padding: 0.5em 0.75em;
+    border-radius: 20px;
+  }
+
+  .HomeTagClose {
+    @extend .btn-close;
+    @extend .btn-close-white;
+    @extend .ms-2;
+    font-size: 0.8rem;
+    margin-left: 0.5em;
+  }
+
+  .searchButton {
+    @extend .btn;
+    @extend .btn-success;
+    // @extend .ms-3;
+    height: 2.5rem;
+    // border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* Ensure the ingredients tab content stacks above other page elements */
+  .IngredientsTab {
+    position: relative; /* keep flow but allow stacking */
+    z-index: 9999; /* high so it appears above other content */
+    background: transparent;
+
+    @extend .mb-3;
+
+    .inputGroup {
+      @extend .input-group;
+    }
+
+    .formControl {
+      @extend .form-control;
+    }
+
+    .tagRow {
+      @extend .p-3;
+      @extend .d-flex;
+      @extend .align-items-center;
+      background-color: #4545453f;
+    }
+  }
+
+  /* Active / inactive state helpers map to bootstrap button variants */
+  .active {
+    @extend .btn-primary;
+  }
+
+  .inactive {
+    @extend .btn-outline-primary;
+  }
+}

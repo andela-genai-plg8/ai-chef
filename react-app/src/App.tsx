@@ -6,16 +6,17 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./App.css";
 
 import "@/firebase";
-import useChatStore from "@utils/useChat";
+import useChat from "@/hooks/useChat";
 import Home from "@/pages/Home/Home";
 import RecipePage from "@/pages/RecipePage/RecipePage";
 import Login from "@/pages/Login/Login";
 import AllRecipes from "./pages/AllRecipes/AllRecipes";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   useEffect(() => {
     // Fetch supported models when the app loads
-    useChatStore.getState().getSupportedModels();
+    useChat.getState().getSupportedModels();
   }, []);
 
   return (
@@ -49,7 +50,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recipes" element={<AllRecipes />} />
-          <Route path="/recipe/:id" element={<RecipePage />} />
+          <Route path="/recipe/:slug" element={<ProtectedRoute><RecipePage /></ProtectedRoute>} />
           <Route path="/settings" element={<div>Settings page coming soon!</div>} />
         </Routes>
       </main>
@@ -59,4 +60,3 @@ function App() {
 }
 
 export default App;
-// Renamed from App.jsx to App.tsx

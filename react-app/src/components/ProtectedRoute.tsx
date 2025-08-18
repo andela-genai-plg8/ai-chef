@@ -1,11 +1,14 @@
 // src/components/ProtectedRoute.tsx
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@utils/useAuth';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 import React from 'react';
 
 export function ProtectedRoute({ children }: { children: React.ReactElement }) {
-  const user = useAuth();
+  const location = useLocation();
+  const { user } = useAuth(location.pathname);
+
   if (!user) return <Navigate to="/login" replace />;
+
   return children;
 }

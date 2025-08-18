@@ -22,8 +22,8 @@ export default defineConfig(({ mode }) => {
         "@components": resolve(__dirname, "src/components"),
         "@pages": resolve(__dirname, "src/pages"),
         "@utils": resolve(__dirname, "src/utils"),
+        "@hooks": resolve(__dirname, "src/hooks"),
         "@assets": resolve(__dirname, "src/assets"),
-        "@sharedTypes": resolve(__dirname, "../sharedtypes"),
       },
     },
     build: {
