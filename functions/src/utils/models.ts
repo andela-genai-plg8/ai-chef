@@ -35,7 +35,7 @@ export const MODELS: SupportedModels = {
     title: "Gemini",
     supported: false,
     models: {
-      "google-gemini-pro": {
+      "google-gemini-2.5-flash": {
         max_tokens: 30720,
         temperature: 0.7,
         title: "Gemini Pro Vision",
@@ -100,7 +100,7 @@ export const MODELS: SupportedModels = {
         temperature: 0.7,
         title: "Llama 3.2",
         provider: "ollama",
-        supported: true
+        supported: true,
       },
     },
   },
