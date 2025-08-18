@@ -1,4 +1,5 @@
 import { Chef } from "./Chef";
+import { GeminiChef } from "./GeminiChef";
 import { GPTChef } from "./GPTChef";
 import { OllamaChef } from "./OllamaChef";
 
@@ -18,6 +19,8 @@ export abstract class ChefFactory {
         return new GPTChef(name, model, history);
       case "ollama":
         return new OllamaChef(name, model, history);
+      case "google":
+        return new GeminiChef(name, model, history);
       default:
         throw new Error("Unknown agent");
     }
