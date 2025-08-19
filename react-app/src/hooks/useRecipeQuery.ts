@@ -37,9 +37,9 @@ export function useRecipeBySlugQuery(slug: string) {
   });
 }
 
-export function usePromotedRecipesQuery() {
+export function usePromotedRecipesQuery(isPromoted: boolean = true) {
   return useQuery({
     queryKey: recipeKeys.promoted,
-    queryFn: getPromotedRecipes,
+    queryFn: () => getPromotedRecipes(isPromoted),
   });
 }

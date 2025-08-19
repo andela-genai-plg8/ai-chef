@@ -14,7 +14,7 @@ export type RecipeListProps = {
 
 const RecipeList: React.FC<RecipeListProps> = ({ recipeList, className }) => {
   const { recipes } = useRecipes();
-  const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery();
+  const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
   const navigate = useNavigate();
 
   let listToRender: Recipe[] = [];

@@ -42,12 +42,14 @@ export async function getRecipeBySlug(slug: string): Promise<Recipe | null> {
   return { slug, ...docData } as Recipe;
 }
 
-export async function getPromotedRecipes(): Promise<Recipe[]> {
+export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Recipe[]> {
+  if (!isPromoted) return [];
+
   const db = getFirestore();
   const recipesCollection = collection(db, "recipes");
   const promotedQuery = query(recipesCollection, where("promoted", "==", true));
   const snapshot = await getDocs(promotedQuery);
-  return snapshot.docs.map((doc) => {
+  return snapshot.docs.slice(0, 5).map((doc) => {
     const data = doc.data();
     return { slug: data.slug, ...data } as Recipe;
   });
