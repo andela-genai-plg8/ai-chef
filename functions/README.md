@@ -88,7 +88,7 @@ This project is licensed under the MIT License.
 
 ## Chef Class and Subclasses
 
-The `Chef` class and its subclasses are responsible for handling various AI-driven functionalities, such as generating recipes, interacting with external APIs, and managing AI agents. Below is an overview of the `Chef` class and its key subclasses:
+The `Chef` class and its subclasses are responsible for handling various AI-driven functionalities, such as matching ingredients to recipes. Ultimately, the AI models and present a common interface that abstracts away the details of the provider from the rest of the application. Below is an overview of the `Chef` class and its key subclasses:
 
 ### Chef Class
 - **Purpose**: Serves as the base class for all chef-related functionalities.
@@ -96,13 +96,9 @@ The `Chef` class and its subclasses are responsible for handling various AI-driv
   - Provides common methods and properties shared across all chef implementations.
   - Acts as a blueprint for creating specific chef types.
 
-### Subclasses
+A Chef is expected to engage the user and recommend recipes to them based on the ingredients they provided during the conversation.
 
-#### `ChefFactory`
-- **Purpose**: A factory class for creating instances of different chef types.
-- **Responsibilities**:
-  - Provides a unified interface for instantiating chef subclasses.
-  - Ensures proper configuration of chef instances.
+### Subclasses
 
 #### `GPTChef`
 - **Purpose**: Specializes in handling OpenAI GPT-based functionalities.
@@ -113,13 +109,114 @@ The `Chef` class and its subclasses are responsible for handling various AI-driv
 #### `OllamaChef`
 - **Purpose**: Focuses on integrating with the Ollama API.
 - **Responsibilities**:
-  - Fetches and processes data from the Ollama service.
-  - Implements Ollama-specific logic for recipe generation.
+  - Generates recipes and other content using Ollama models.
+  - Manages chat interactions and tool calls.
 
 #### `GeminiChef`
-- **Purpose**: Handles functionalities related to the Gemini AI platform.
+- **Purpose**: Implementation of Chef based on Gemini.
 - **Responsibilities**:
-  - Integrates with Gemini APIs.
-  - Provides advanced AI-driven features for recipe creation.
+  - Generates recipes and other content using Ollama models.
+  - Manages chat interactions and tool calls.
 
-Each subclass extends the `Chef` class and customizes its behavior to suit specific use cases or external integrations.
+Each subclass extends the `Chef` class and customizes its behavior to suit specific use cases or model integrations.
+
+### `ChefFactory`
+- **Purpose**: A factory class for creating instances of different chef types.
+- **Responsibilities**:
+  - It returns the spefic chef implementation based on the model string provided to it.
+  - It assumes that model strings have the format <provide>-<model> eg. gpt-gpt-4o-mini
+
+### Example Usage of the Chef Class
+
+Here is an example of how the `Chef` class can be used in the application, following the pattern used in the controllers:
+
+```typescript
+import { ChefFactory } from "./providers/ChefFactory";
+
+// Get a Chef subclass instance using the ChefFactory
+const chefInstance = ChefFactory.getChef({
+  model: "gpt-gpt-4o-mini",
+  history: [
+    { role: "user", content: "What can I cook with chicken and broccoli?" },
+  ],
+  name: "ChefBot",
+});
+
+// Get the response from the model
+async function interactWithChef() {
+  try {
+    const response = await chefInstance.getResponse();
+    console.log("Model Response:", response);
+
+    // Get recipe recommendations
+    const recipes = await chefInstance.getRecipeRecommendations();
+    console.log("Recommended Recipes:", recipes);
+
+    // Get ingredients deduced from the conversation
+    const ingredients = await chefInstance.getIngredients();
+    console.log("Deduced Ingredients:", ingredients);
+  } catch (error) {
+    console.error("Error interacting with Chef:", error);
+  }
+}
+
+interactWithChef();
+```
+
+This example demonstrates how to use the `ChefFactory` to create a `Chef` subclass instance and interact with it to get responses, recipe recommendations, and deduced ingredients.
+
+### Subclass Implementation Guidelines
+
+Subclasses of the `Chef` class should adhere to the following guidelines:
+
+1. **Constructor**:
+   - Ensure that the `super` constructor is invoked.
+   - If there is a need to alter the system prompt, it can be done by replacing the first item in the `history` property.
+
+   Example:
+   ```typescript
+   import { Chef } from "./Chef";
+
+   export class CustomChef extends Chef {
+     constructor(context: string, chatHistory: any[], preferredName: string) {
+       super(context, chatHistory, preferredName);
+       // Modify the system prompt if needed
+       this.history[0] = { role: "system", content: "Custom system prompt" };
+     }
+   }
+   ```
+
+2. **`getResponse` Method**:
+   - Implement the `getResponse` async method.
+   - Pass tool descriptions to the model in the syntax supported by the model.
+   - Handle the tool calls made by the model.
+   - Use the parent class's tool functions for specific tasks:
+     - `searchForMatchingRecipe(ingredient: string)` for the `search_recipes` tool.
+     - For the `display_recipes` tool, set the `recipeRecommendations` property with the JSON-formatted recommendations returned by the model.
+
+   Example:
+   ```typescript
+   async getResponse() {
+     // Pass tool descriptions to the model
+     const toolDescriptions = [
+       { name: "search_recipes", description: "Search for recipes based on ingredients." },
+       { name: "display_recipes", description: "Display recommended recipes." },
+     ];
+
+     const response = await this.model.generateResponse(this.history, toolDescriptions);
+
+     // Handle tool calls
+     if (response.toolCall === "search_recipes") {
+       const ingredient = response.toolInput;
+       const recipes = await this.searchForMatchingRecipe(ingredient);
+       this.history.push({ role: "assistant", content: JSON.stringify(recipes) });
+     } else if (response.toolCall === "display_recipes") {
+       this.recipeRecommendations = JSON.parse(response.toolOutput);
+     }
+
+     return response;
+   }
+   ```
+
+By following these guidelines, subclasses can ensure consistent behavior and leverage the functionality provided by the `Chef` base class.
+
