@@ -120,7 +120,7 @@ export class GeminiChef extends Chef {
           case "find_recipe": {
             const ingredientsArray = parsedArgs.ingredients || [];
             const ingredients = Array.isArray(ingredientsArray) ? ingredientsArray.join(",") : String(ingredientsArray || "");
-            result = result !== null ? result : await this.callSpoonacular(ingredients);
+            result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
             const content = `This is the data from the tool: ${JSON.stringify(result)}`;
             this.history.push({ role: "tool", content, tool_call_id: fc.id || name });
             break;

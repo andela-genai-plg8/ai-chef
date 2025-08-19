@@ -22,5 +22,6 @@ export type Recipe = {
   servings?: number | string;
   calories?: number | string;
   ingredients: Ingredient[];
+  ingredientList: string[];
   instructions: PreparationStep[];
 };

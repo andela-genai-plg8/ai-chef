@@ -1,20 +1,44 @@
-
-import { useEffect, useState } from 'react';
 import styles from "./Styles.module.scss";
-import RecipeList from '@/components/Recipe/RecipeList';
-import { useRecipes } from '@/hooks/useRecipes';
 import Search from '@/components/Search/Search';
+import RobotChef from '@/assets/Robot Chef.gif';
+import RecipeList from '@/components/Recipe/RecipeList';
+import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
+import { Link } from 'react-router-dom';
 
 function Home() {
-  const { getAllRecipes } = useRecipes();
-  useEffect(() => {
-    getAllRecipes();
-  }, [getAllRecipes]);
+  const { data: featuredRecipes, isLoading } = usePromotedRecipesQuery();
 
   return (
-    <div className={styles.Home}>
-      <Search className={styles.Search} />
-      <RecipeList />
+    <div className={styles.Home} style={{ backgroundImage: `url(${RobotChef})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className={styles.Background}></div>
+      {/* Welcome Message */}
+      <div className={styles.WelcomeMessage}>
+        <h1>Welcome to Chef Andel!</h1>
+        <p>Your ultimate destination for discovering mouthwatering recipes and culinary inspiration. Let’s cook something amazing today!</p>
+      </div>
+
+      {/* Featured Recipes Section */}
+      <div className={styles.FeaturedRecipes}>
+        <h2>Featured Recipes</h2>
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          <>
+            <RecipeList recipeList={featuredRecipes} />
+            <Link to="/recipes" className={styles.MoreLink}>More</Link>
+          </>
+        )}
+      </div>
+
+      {/* Featured Recipes Section */}
+      <div className={styles.FeaturedRecipes}>
+        <h2>Nearby Restaurants</h2>
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          <RecipeList recipeList={featuredRecipes} />
+        )}
+      </div>
     </div>
   );
 }

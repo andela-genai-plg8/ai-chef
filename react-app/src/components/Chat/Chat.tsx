@@ -1,22 +1,21 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import useChatStore from "@/hooks/useChat";
+import useChat from "@/hooks/useChat";
 import styles from "./Styles.module.scss";
 
 const Chat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  // const [selectedModel, setSelectedModel] = useState("gpt-4o");
   const [open, setOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const messages = useChatStore((state) => state.messages);
-  const currentModel = useChatStore((state) => state.currentModel);
-  const setCurrentModel = useChatStore((state) => state.setCurrentModel);
-  const supportedModels = useChatStore((state) => state.supportedModels);
-  const sendMessage = useChatStore((state) => state.sendMessage);
-  const addMessage = useChatStore((state) => state.addMessage);
+  const messages = useChat((state) => state.messages);
+  const currentModel = useChat((state) => state.currentModel);
+  const setCurrentModel = useChat((state) => state.setCurrentModel);
+  const supportedModels = useChat((state) => state.supportedModels);
+  const sendMessage = useChat((state) => state.sendMessage);
+  const addMessage = useChat((state) => state.addMessage);
 
   useEffect(() => {
     if (open && messagesEndRef.current) {

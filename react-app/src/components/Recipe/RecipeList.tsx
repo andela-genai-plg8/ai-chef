@@ -13,19 +13,12 @@ export type RecipeListProps = {
 }
 
 const RecipeList: React.FC<RecipeListProps> = ({ recipeList, className }) => {
-  const { recipes } = useRecipes();
   const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
+  const listToRender = (recipeList === undefined ? promotedRecipes : recipeList) || [];
+
+  console.log(recipeList)
+
   const navigate = useNavigate();
-
-  let listToRender: Recipe[] = [];
-  if (recipeList && Array.isArray(recipeList) && recipeList.length > 0) {
-    listToRender = recipeList;
-  } else if (promotedRecipes && promotedRecipes.length > 0) {
-    listToRender = promotedRecipes;
-  } else {
-    listToRender = recipes || [];
-  }
-
   return (
     <div className={classNames(styles.RecipeList, className)}>
       {isPromotedLoading && !recipeList ? (

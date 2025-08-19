@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 import { IngredientName, Recipe } from "shared-types";
-import useChatStore from "./useChat";
+import useChat from "./useChat";
 import { collection, getDocs, getFirestore } from "firebase/firestore";
 
 type RecipesState = {
@@ -10,10 +10,12 @@ type RecipesState = {
   ingredients: IngredientName[];
   addIngredient: (ingredient: IngredientName) => void;
   addIngredients: (ingredients: IngredientName[]) => void;
+  setIngredients: (ingredients: IngredientName[]) => void;
   findRecipe: () => Promise<Recipe[] | undefined>;
   removeIngredient: (ingredient: string) => void;
   removeIngredientAt: (index: number) => void;
   getAllRecipes: () => Promise<Recipe[] | undefined>;
+  setSearchedRecipes: (recipes: Recipe[]) => void;
 };
 
 export const useRecipes = create<RecipesState>(
@@ -29,6 +31,7 @@ export const useRecipes = create<RecipesState>(
       set((state) => ({
         ingredients: [...state.ingredients, ...ingredients],
       })),
+    setIngredients: (ingredients: IngredientName[]): void => set({ ingredients }),
     removeIngredient: (ingredient: string) => {
       set((state) => ({
         ingredients: state.ingredients.filter((ing) => ing !== ingredient),
@@ -41,7 +44,6 @@ export const useRecipes = create<RecipesState>(
     },
     findRecipe: async (): Promise<Recipe[] | undefined> => {
       const { ingredients } = get();
-      const chatStore = useChatStore.getState();
       try {
         const response = await axios.post("/api/findRecipe", {
           ingredients,
@@ -69,9 +71,10 @@ export const useRecipes = create<RecipesState>(
         return undefined;
       }
     },
+    setSearchedRecipes: (searchedRecipes) => set({ searchedRecipes }),
   })
 );
 
-useRecipes.subscribe(({ ingredients }) => {
-  // console.log("Ingredients updated:", ingredients);
+useRecipes.subscribe(({ searchedRecipes }) => {
+  console.log("Searched recipes updated:", searchedRecipes);
 });

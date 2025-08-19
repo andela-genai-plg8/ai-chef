@@ -15,10 +15,11 @@ export interface ChatStore {
   sendMessage: (input?: string) => Promise<void>;
 }
 import axios from "axios";
+import { useRecipes } from "./useRecipes";
 
 const CONTEXT_WINDOW_SIZE = 10;
 
-const useChatStore = create<ChatStore>((set, get) => ({
+const useChat = create<ChatStore>((set, get) => ({
   messages: [],
   currentModel: "gpt-gpt-4o",
   sending: false,
@@ -105,15 +106,21 @@ const useChatStore = create<ChatStore>((set, get) => ({
       set((state) => ({ ...state, sending: true }));
 
       const state = get();
-      console.log("Sending message:", prompt, state);
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt, context: contextWindow, model: state.currentModel }),
+      const res = await axios.post("/api/chat", {
+        prompt: prompt,
+        context: contextWindow,
+        model: state.currentModel,
       });
-      const data = await res.json();
-      get().setMessages([...get().messages, { sender: "assistant", content: data.messages || data.error }]);
+
+      const data = res.data;
+      const newState = get();
+      newState.setMessages([...newState.messages, { sender: "assistant", content: data.messages || data.error }]);
+      const recipeState = useRecipes.getState();
+      if (data.recommendations) {
+        recipeState.setIngredients(data.ingredients || []);
+        recipeState.setSearchedRecipes(data.recommendations || []);
+      }
     } catch (err) {
       const errorMsg = typeof err === "object" && err !== null && "message" in err ? (err as { message: string }).message : String(err);
       get().setMessages([...get().messages, { sender: "assistant", content: "Error: " + errorMsg }]);
@@ -123,4 +130,4 @@ const useChatStore = create<ChatStore>((set, get) => ({
   },
 }));
 
-export default useChatStore;
+export default useChat;

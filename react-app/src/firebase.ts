@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 // Extend ImportMeta to include env property for Vite
 interface ImportMetaEnv {
@@ -33,13 +33,35 @@ if (!(getApps().length > 0)) {
   const db = getFirestore();
   const recipeCollection = collection(db, "recipes");
 
+  // // get a collection of recipes sorted by the slug and delete one of every duplicate slug
+  // onSnapshot(recipeCollection, (snapshot) => {
+  //   const seenSlugs = new Set();
+  //   snapshot.docs.forEach((docSnap) => {
+  //     const recipe = docSnap.data();
+  //     const slug = recipe.name.toLowerCase().replace(/\s+/g, "-");
+  //     const recipeDocRef = doc(recipeCollection, docSnap.id);
+
+  //     if (seenSlugs.has(slug)) {
+  //       // If the slug is a duplicate, delete the document
+  //       console.log(`Deleting duplicate recipe: ${recipe.name}`);
+  //       deleteDoc(recipeDocRef);
+  //     } else {
+  //       seenSlugs.add(slug);
+  //     }
+  //     updateDoc(recipeDocRef, { slug });
+  //   });
+  // });
+
   // // for every recipe in the collection, update it by adding a slug property formed by the lowercased name
   // onSnapshot(recipeCollection, (snapshot) => {
   //   snapshot.docs.forEach((docSnap) => {
   //     const recipe = docSnap.data();
   //     const slug = recipe.name.toLowerCase().replace(/\s+/g, "-");
+  //     const ingredientList = recipe.ingredients
+  //       .map((ingredient: { name: string }) => ingredient.name.toLowerCase().replace(/\s+/g, "-"))
+  //       .filter((i: string) => i.length > 0);
   //     const recipeDocRef = doc(recipeCollection, docSnap.id);
-  //     updateDoc(recipeDocRef, { slug });
+  //     updateDoc(recipeDocRef, { slug, ingredientList });
   //   });
   // });
 

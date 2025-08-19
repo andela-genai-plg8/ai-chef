@@ -40,7 +40,7 @@ export class OllamaChef extends Chef {
         switch (toolCall.function.name) {
           case "find_recipe":
             // Handle find_recipe tool call
-            const content = JSON.stringify(await this.callSpoonacular(toolCall.function.arguments.ingredients.join(",")));
+            const content = JSON.stringify(await this.searchForMatchingRecipe(toolCall.function.arguments.ingredients.join(",")));
 
             this.history.push({ role: "tool", content, name: response.message.tool_name });
             response = await call();

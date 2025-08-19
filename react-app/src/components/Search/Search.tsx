@@ -6,7 +6,6 @@ import classNames from "classnames";
 export type SearchProps = { className?: string; style?: CSSProperties };
 
 const Search: React.FC<SearchProps> = ({ className = "", style = {} }) => {
-  const [activeTab, setActiveTab] = useState<'ingredients' | 'inspiration'>('ingredients');
   const [ingredient, setIngredient] = useState('');
   const { ingredients, addIngredient, removeIngredientAt } = useRecipes();
 
@@ -24,7 +23,7 @@ const Search: React.FC<SearchProps> = ({ className = "", style = {} }) => {
 
   return (
     <div className={classNames(styles.Search, className)} style={style}>
-      <div className={classNames(styles.HomeTabContainer)}>
+      {/* <div className={classNames(styles.HomeTabContainer)}>
         <button
           className={classNames(styles.HomeTabBtnLeft, activeTab === 'ingredients' ? styles.active : styles.inactive)}
           onClick={() => setActiveTab('ingredients')}
@@ -37,9 +36,9 @@ const Search: React.FC<SearchProps> = ({ className = "", style = {} }) => {
         >
           Meal Inspiration
         </button>
-      </div>
+      </div> */}
 
-      {activeTab === 'ingredients' && (
+      {/* {activeTab === 'ingredients' && ( */}
         <div className={styles.IngredientsTab}>
           <div className={styles.inputGroup}>
             <input
@@ -64,7 +63,7 @@ const Search: React.FC<SearchProps> = ({ className = "", style = {} }) => {
           </div>
           {/* Tag list below search box */}
           {ingredients.length > 0 && (
-            <div className={styles.tagRow}>
+            <div className={styles.TagRow}>
               <div className={styles.HomeTagList}>
                 {ingredients.map((ing, idx) => (
                   <span
@@ -94,14 +93,7 @@ const Search: React.FC<SearchProps> = ({ className = "", style = {} }) => {
             </div>
           )}
         </div>
-      )}
-
-      {activeTab === 'inspiration' && (
-        <div>
-          <h4>Meal Inspiration</h4>
-          <p>Get inspired with new recipes and ideas!</p>
-        </div>
-      )}
+      {/* )} */}
     </div>
   )
 }

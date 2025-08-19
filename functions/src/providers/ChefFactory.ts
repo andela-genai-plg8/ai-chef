@@ -9,7 +9,6 @@ export type ChatHistory = ChatItem[];
 export abstract class ChefFactory {
   public static getChef(name: string, specifiedModel: string = process.env.DEFAULT_MODEL || "", history: ChatHistory = []): Chef {
 
-    console.log("specified model:", specifiedModel);
     // This method should return an instance of the specific agent
     const provider = specifiedModel?.replace(/^([^-]+)\-[^\n]+$/i, "$1");
     const model = specifiedModel.substring(provider.length + 1); // Remove the "gpt-" or "ollama-" prefix

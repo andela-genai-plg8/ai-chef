@@ -1,0 +1,66 @@
+@import "@/index.module.scss";
+
+.RestaurantCard {
+  background: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 260px;
+  font-size: 1.1rem;
+  color: #222;
+
+  .RestaurantCardImage {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    margin-bottom: 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    display: block;
+  }
+
+  .RestaurantCardName {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  .RestaurantCardDesc {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  .RestaurantCardPrep {
+    font-size: 0.9rem;
+    color: #388e3c;
+    font-weight: 500;
+  }
+}
+
+.RestaurantList {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(1, 1fr);
+
+  @media (min-width: 576px) {
+    // sm
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 768px) {
+    // md
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (min-width: 992px) {
+    // lg
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

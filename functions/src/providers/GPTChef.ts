@@ -37,7 +37,7 @@ export class GPTChef extends Chef {
             type: "function",
             function: {
               name: "display_recipes",
-              description: "Displays the found recipes. It does not return any result.",
+              description: "Displays recipes to a special display. It returns a response stating the number recipes actually displayed.",
               parameters: {
                 type: "object",
                 properties: {
@@ -51,6 +51,7 @@ export class GPTChef extends Chef {
       });
     };
 
+    console.log(this.history.map((h) => h.role));
     let response = await call();
     let count = 0;
     let result: any = null;
@@ -63,21 +64,35 @@ export class GPTChef extends Chef {
         switch (functionCall.name) {
           case "find_recipe": {
             const ingredients = JSON.parse(functionCall.arguments).ingredients.join(",") as string;
-            // console.log("Calling Spoonacular API with ingredients:", ingredients);
-            result = result !== null ? result : await this.callSpoonacular(ingredients);
-            const content = `This is the data from the tool: ${JSON.stringify(result)}`;
-            this.history.push({ role: "tool", content, tool_call_id: toolCall.id });
+            try {
+              result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
+              const content = `This is the data from the tool: ${JSON.stringify(result)}`;
+              this.history.push({ role: "tool", content, tool_call_id: toolCall.id });
+            } catch (error) {
+              console.error("Error calling Spoonacular API:", error);
+              const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
+              this.history.push({ role: "tool", content: `Error calling Spoonacular API: ${errorMessage}`, tool_call_id: toolCall.id });
+            }
 
-            console.log("Tool call result:", content.length, toolCall.id);
             break;
           }
           case "display_recipes": {
-            const recipes = JSON.parse(functionCall.arguments).recipes || [];
-            this.history.push({ role: "tool", content: "", tool_call_id: toolCall.id });
+            try {
+              const recipes = JSON.parse(functionCall.arguments).recipes || [];
+              this.recipeRecommendations = recipes;
+
+              console.log("Recipes to display:", recipes.length);
+              this.history.push({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
+            } catch (error) {
+              console.error("Error displaying recipes:", error);
+              // const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
+              this.history.push({ role: "tool", content: `Error displaying recipes: ${error}`, tool_call_id: toolCall.id });
+            }
 
             break;
           }
           default:
+            this.history.push({ role: "tool", content: `The tool ${functionCall.name} is not implemented.`, tool_call_id: toolCall.id });
             break;
         }
       }
