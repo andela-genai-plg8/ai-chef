@@ -51,7 +51,6 @@ export class GPTChef extends Chef {
       });
     };
 
-    console.log(this.history.map((h) => h.role));
     let response = await call();
     let count = 0;
     let result: any = null;
@@ -69,7 +68,6 @@ export class GPTChef extends Chef {
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;
               this.history.push({ role: "tool", content, tool_call_id: toolCall.id });
             } catch (error) {
-              console.error("Error calling Spoonacular API:", error);
               const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
               this.history.push({ role: "tool", content: `Error calling Spoonacular API: ${errorMessage}`, tool_call_id: toolCall.id });
             }
@@ -81,7 +79,6 @@ export class GPTChef extends Chef {
               const recipes = JSON.parse(functionCall.arguments).recipes || [];
               this.recipeRecommendations = recipes;
 
-              console.log("Recipes to display:", recipes.length);
               this.history.push({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
             } catch (error) {
               console.error("Error displaying recipes:", error);

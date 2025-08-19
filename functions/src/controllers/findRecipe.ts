@@ -6,10 +6,13 @@ export const findRecipe = functions.https.onRequest(async (req: Request, res: Re
   const ingredients: string[] = req.body.ingredients || [];
 
   try {
-    const chef = ChefFactory.getChef("Andel", req.body.model || process.env.DEFAULT_MODEL, [
-      {
-        role: "user",
-        content: `What can I make with these ingredients: ${ingredients.join(", ")}.
+    const chef = ChefFactory.getChef({
+      name: "Andel",
+      specifiedModel: req.body.model || process.env.DEFAULT_MODEL,
+      history: [
+        {
+          role: "user",
+          content: `What can I make with these ingredients: ${ingredients.join(", ")}.
       Without introducing yourself, respond with only a JSON array or recipes that look like this: [<recipe>, <recipe>] where <recipe> is a JSON object representing the recipe and it looks like this:
       {
         "name": "<recipe name>",
@@ -26,8 +29,9 @@ export const findRecipe = functions.https.onRequest(async (req: Request, res: Re
       }
 
       Make SURE that only that the JSON response can be parsed by JSON.parse() and that it is a valid JSON array of recipes.`,
-      },
-    ]);
+        },
+      ],
+    });
 
     let status = "success";
     let recipes = [];

@@ -8,14 +8,14 @@ export const chat = functions.https.onRequest(async (req: Request, res: Response
   const context = req.body.context || [];
 
   try {
-    const chef = ChefFactory.getChef(
-      "Andel",
-      req.body.model,
-      context.map(({ sender, content }: any) => ({
+    const chef = ChefFactory.getChef({
+      name: "Andel",
+      specifiedModel: req.body.model,
+      history: context.map(({ sender, content }: any) => ({
         role: sender,
         content,
-      }))
-    );
+      })),
+    });
 
     const messages = await chef.getResponse();
     const recommendations = chef.getRecipeRecommendations();

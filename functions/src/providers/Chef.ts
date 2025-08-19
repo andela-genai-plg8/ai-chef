@@ -6,6 +6,10 @@ export type GetResponseParams = { prompt?: string; callBack?: (data: any) => voi
 export type ChatItem = { role: string; content: string; tool_call_id?: string; [name: string]: any };
 export type ChatHistory = ChatItem[];
 
+/**
+ * Abstract class representing a Chef.
+ * This class provides a base implementation for different types of chefs.
+ */
 export abstract class Chef {
   protected name: string;
   protected model: string;
@@ -92,24 +96,24 @@ Constraint: Do not use code blocks or repeat the recipe details in your summary.
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
-        databaseURL: `https://${process.env.PROJECT_ID}.firebaseio.com`,
+        databaseURL: process.env.DATABASE_URL,
       });
     }
   }
 
   /**
-   * Get a response from the chef.
+   * To be implemented by subclass. Pass the contexts to the model and returns the model's response.
+   * It should also pass tools to the model if available.
    * @param param
    */
-  abstract getResponse(param?: GetResponseParams): Promise<string>;
+  public abstract getResponse(param?: GetResponseParams): Promise<string>;
 
   /**
    * Search for recipes matching the given ingredients.
    * @param ingredients - A comma-separated string of ingredients to search for.
    * @returns A promise that resolves to an array of matching recipes.
    */
-  async searchForMatchingRecipe(ingredients: string): Promise<any> {
-
+  protected async searchForMatchingRecipe(ingredients: string): Promise<any> {
     // Search the application DB
     this.ingredients = ingredients
       .split(",")
@@ -119,24 +123,30 @@ Constraint: Do not use code blocks or repeat the recipe details in your summary.
     const recipes = snapshot.docs.map((doc) => doc.data());
 
     this.recipeRecommendations = recipes as Recipe[];
-
-    // // search Spoonacular API
-    // try {
-    //   const response = await axios.get("https://api.spoonacular.com/recipes/findByIngredients", {
-    //     params: {
-    //       ingredients,
-    //       apiKey: process.env.SPOONACULAR_API_KEY,
-    //       ignorePantry: true,
-    //     },
-    //   });
-
-    //   this.recipeRecommendations = [...this.recipeRecommendations, ...response.data];
-    // } catch (error) {
-    //   // fail silently.
-    //   // TODO: log the error
-    // }
-
     return this.recipeRecommendations;
+  }
+
+  /**
+   * Search the Spoonacular API for recipes matching the given ingredients.
+   * @param ingredients
+   * @returns
+   */
+  protected async searchSpoonacular(ingredients: string): Promise<any> {
+    try {
+      const response = await axios.get("https://api.spoonacular.com/recipes/findByIngredients", {
+        params: {
+          ingredients,
+          apiKey: process.env.SPOONACULAR_API_KEY,
+          ignorePantry: true,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      // fail silently.
+      // TODO: log the error
+      return [];
+    }
   }
 
   public getRecipeRecommendations(): Recipe[] {
