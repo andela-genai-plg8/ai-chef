@@ -10,13 +10,12 @@ import classNames from 'classnames';
 export type RecipeListProps = {
   className?: string; // Optional className for styling
   recipeList?: Recipe[]; // Optional prop for passing a specific recipe list
+  limit?: number
 }
 
-const RecipeList: React.FC<RecipeListProps> = ({ recipeList, className }) => {
+const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className }) => {
   const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
-  const listToRender = (recipeList === undefined ? promotedRecipes : recipeList) || [];
-
-  console.log(recipeList)
+  const listToRender = ((recipeList === undefined ? promotedRecipes : recipeList) || []).filter((_, index) => limit === undefined || index < limit);
 
   const navigate = useNavigate();
   return (
