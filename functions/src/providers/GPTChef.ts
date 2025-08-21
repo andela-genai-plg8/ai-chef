@@ -1,5 +1,6 @@
 import API, { OpenAI } from "openai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
+import { Chat } from "openai/resources/index";
 
 export class GPTChef extends Chef {
   private openai?: InstanceType<typeof OpenAI>;
@@ -12,7 +13,7 @@ export class GPTChef extends Chef {
   }
 
   async getResponse({ prompt, callBack }: GetResponseParams = {}): Promise<string> {
-    if (prompt) this.history.push({ role: "user", content: prompt });
+    if (prompt) this.addToHistory({ role: "user", content: prompt });
 
     const call = async () => {
       return await this.openai!.chat.completions.create({
@@ -56,7 +57,8 @@ export class GPTChef extends Chef {
     let result: any = null;
     while (response.choices[0].finish_reason == "tool_calls" && count < 5) {
       for (const toolCall of response.choices[0].message.tool_calls!) {
-        this.history.push(response.choices[0].message as ChatItem);
+        const { content, role, ...rest } = response.choices[0].message;
+        this.addToHistory({ sender: role, role, content, ...rest } as ChatItem);
 
         const functionCall = (toolCall as unknown as { function: Function }).function;
 
@@ -66,10 +68,10 @@ export class GPTChef extends Chef {
             try {
               result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;
-              this.history.push({ role: "tool", content, tool_call_id: toolCall.id });
+              this.addToHistory({ role: "tool", content, tool_call_id: toolCall.id });
             } catch (error) {
               const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
-              this.history.push({ role: "tool", content: `Error calling Spoonacular API: ${errorMessage}`, tool_call_id: toolCall.id });
+              this.addToHistory({ role: "tool", content: `Error calling Spoonacular API: ${errorMessage}`, tool_call_id: toolCall.id });
             }
 
             break;
@@ -79,17 +81,18 @@ export class GPTChef extends Chef {
               const recipes = JSON.parse(functionCall.arguments).recipes || [];
               this.recipeRecommendations = recipes;
 
-              this.history.push({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
+              this.addToHistory({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
+              this.hasRecipeRecommendations = true;
             } catch (error) {
               console.error("Error displaying recipes:", error);
               // const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
-              this.history.push({ role: "tool", content: `Error displaying recipes: ${error}`, tool_call_id: toolCall.id });
+              this.addToHistory({ role: "tool", content: `Error displaying recipes: ${error}`, tool_call_id: toolCall.id });
             }
 
             break;
           }
           default:
-            this.history.push({ role: "tool", content: `The tool ${functionCall.name} is not implemented.`, tool_call_id: toolCall.id });
+            this.addToHistory({ role: "tool", content: `The tool ${functionCall.name} is not implemented.`, tool_call_id: toolCall.id });
             break;
         }
       }
