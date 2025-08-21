@@ -13,6 +13,7 @@ export class GPTChef extends Chef {
   }
 
   async getResponse({ prompt, callBack }: GetResponseParams = {}): Promise<string> {
+    await super.getResponse({ prompt, callBack });
     if (prompt) this.addToHistory({ role: "user", content: prompt });
 
     const call = async () => {

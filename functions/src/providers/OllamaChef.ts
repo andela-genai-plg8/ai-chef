@@ -1,5 +1,6 @@
 import ollama from "ollama";
 import { Chef, ChatHistory, GetResponseParams } from "./Chef";
+import { Recipe } from "shared-types";
 
 export class OllamaChef extends Chef {
   constructor(name: string, model: string, history: ChatHistory = []) {
@@ -7,7 +8,9 @@ export class OllamaChef extends Chef {
   }
 
   async getResponse({ prompt, callBack }: GetResponseParams = {}): Promise<string> {
+    await super.getResponse({ prompt, callBack });
     if (prompt) this.history.push({ role: "user", content: prompt });
+
     // Use Ollama local API
     const call = async () =>
       ollama.chat({
@@ -18,7 +21,7 @@ export class OllamaChef extends Chef {
             type: "function",
             function: {
               name: "find_recipe",
-              description: "Finds recipes based on ingredients. The response should be a JSON array of recipes.",
+              description: "Finds recipes based on ingredients. The response is a JSON array of recipes.",
               parameters: {
                 type: "object",
                 properties: {
@@ -28,30 +31,74 @@ export class OllamaChef extends Chef {
               },
             },
           },
+          {
+            type: "function",
+            function: {
+              name: "display_recipes",
+              description: "Displays recipes to a special display. It returns a response stating the number recipes actually displayed.",
+              parameters: {
+                type: "object",
+                properties: {
+                  recipes: { type: "array", items: { type: "object" }, description: "List of recipes in JSON array format" },
+                },
+                required: ["recipes"],
+              },
+            },
+          },
         ],
       });
 
     let response = await call();
 
-    if (response.message.tool_calls && response.message.tool_calls?.length > 0) {
+    let count = 0;
+    let result: any = null;
+    while (response.message.tool_calls && count < 5) {
+      console.log("Tool calls:", response.message.tool_calls);
       response.message.tool_calls.forEach(async (toolCall) => {
-        this.history.push(response.message);
+        console.log("Tool call:", toolCall);
+        this.addToHistory(response.message);
+
+        // const functionCall = (toolCall as unknown as { function: Function }).function;
 
         switch (toolCall.function.name) {
-          case "find_recipe":
-            // Handle find_recipe tool call
-            const content = JSON.stringify(await this.searchForMatchingRecipe(toolCall.function.arguments.ingredients.join(",")));
+          case "find_recipe": {
+            const ingredients = toolCall.function.arguments.ingredients as string;
+            try {
+              result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
+              console.log("Result from searchForMatchingRecipe:", result);
+              const content = `This is the data from the tool: ${JSON.stringify(result)}`;
+              this.addToHistory({ role: "tool", content, tool_call_id: toolCall.function.name });
+            } catch (error) {
+              const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
+              this.addToHistory({ role: "tool", content: `Error calling Spoonacular API: ${errorMessage}`, tool_call_id: toolCall.function.name });
+            }
 
-            this.history.push({ role: "tool", content, name: response.message.tool_name });
-            response = await call();
             break;
+          }
+          case "display_recipes": {
+            try {
+              const recipes: Recipe[] = JSON.parse(toolCall.function.arguments.recipes) || [];
+              this.recipeRecommendations = recipes;
+
+              this.addToHistory({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.function.name });
+            } catch (error) {
+              console.error("Error displaying recipes:", error);
+              // const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);
+              this.addToHistory({ role: "tool", content: `Error displaying recipes: ${error}`, tool_call_id: toolCall.function.name });
+            }
+
+            break;
+          }
           default:
+            this.addToHistory({ role: "tool", content: `The tool ${toolCall.function.name} is not implemented.`, tool_call_id: toolCall.function.name });
             break;
         }
       });
+
+      response = await call();
+      count++;
     }
 
-    console.log("Final response:", response.message);
     return response.message.content || "";
   }
 }

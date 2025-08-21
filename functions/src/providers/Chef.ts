@@ -2,7 +2,7 @@ import axios from "axios";
 import { Recipe } from "shared-types";
 import * as admin from "firebase-admin";
 
-export type GetResponseParams = { prompt?: string; callBack?: (data: any) => void };
+export type GetResponseParams = { prompt?: string; authorizationToken?: string; callBack?: (data: any) => void };
 export type ChatItem = { role: string; content: string; tool_call_id?: string; [name: string]: any };
 export type ChatHistory = ChatItem[];
 
@@ -29,20 +29,34 @@ export abstract class Chef {
         role: "system",
         content: `
 You are Chef ${name}, a knowledgeable and friendly food technologist and chef. Your primary goal is to help users discover and discuss recipes using the available tools.
-
+[[USER_DESCRIPTION]]
 Core Directives
 
 Introduction
 
-On the very first interaction only, introduce yourself simply.
+On the very first interaction only, introduce yourself simply to the user.
 
-Example: "Hello, I'm Chef ${name}. What can I help you cook today?"
+If the user is anonymous, encourage them to sign in or sign up for a personalized experience.
+
+Example 1: "Hello, I'm Chef ${name}. I am here to assist with your cooking aspirations. If you login, I can offer personalized recipe suggestions based on your preferences."
 
 Greetings
 
-If a user sends a normal greeting (e.g., “hi,” “hello,” “good morning”), respond with a polite greeting.
+If an anonymous user sends a normal greeting (e.g., “hi,” “hello,” “good morning”), for the first time, respond with a polite greeting.
 
-Example: “Hello! How are you today?”
+Example: “Hello! How are you today? I am here to assist with your cooking aspirations. If you login, I can offer personalized recipe suggestions based on your preferences.”
+
+Subsequent greetings should be brief.
+
+Example: “Hello again! How can I assist you today?”
+
+If a user who is logged in sends a normal greeting, respond with a personalized greeting.
+
+Example: "Hello <user's name>, I'm Chef ${name}. What can I help you cook today?"
+
+Subsequent greetings should be brief.
+
+Example: “Hello <user's first name>! How can I assist you today?”
 
 Do not trigger the 'recipe request workflow' unless the user explicitly asks about food or cooking.
 
@@ -116,7 +130,7 @@ If at least one recipe was passed to display_recipes, include a link placeholder
 
 Example: "I found a wonderful recipe for you: Savory Slow-Roasted Tomatoes with Anchovy. Enjoy! View Results"
 
-Constraint: Do not repeat full recipe details in the summary. Also, accompany each recipe in the summary with an image and a server relative link to its respective recipe page. The link to recipes has the format: /recipes/<slug>.
+Constraint: Do not repeat full recipe details in the summary. Also, accompany each recipe in the summary with an image and a server relative link to its respective recipe page. The link to recipes has the format: /recipe/<slug>.
 
 Recipe Discussion Workflow
 
@@ -155,7 +169,49 @@ Keep responses short unless the user explicitly asks for more explanation.
    * It should also pass tools to the model if available.
    * @param param
    */
-  public abstract getResponse(param?: GetResponseParams): Promise<string>;
+  public async getResponse(param?: GetResponseParams): Promise<string> {
+
+    if (param?.authorizationToken) {
+      const match = param?.authorizationToken.match(/^Bearer (.+)$/);
+
+      if (match) {
+        const decodeToken = await admin.auth().verifyIdToken(match[1]);
+        const userRecord = await admin.auth().getUser(decodeToken.uid);
+
+        this.history = this.history.map((item) => {
+          if (item.content.includes("[[USER_DESCRIPTION]]")) {
+            return {
+              ...item,
+              content: item.content.replace(
+                "[[USER_DESCRIPTION]]",
+                `
+The user's name is ${userRecord.displayName}.
+            `
+              ),
+            };
+          }
+          return item;
+        });
+        return Promise.resolve("");
+      }
+    }
+
+    this.history = this.history.map((item) => {
+      if (item.content.includes("[[USER_DESCRIPTION]]")) {
+        return {
+          ...item,
+          content: item.content.replace(
+            "[[USER_DESCRIPTION]]",
+            `
+The user is anonymous.`
+          ),
+        };
+      }
+      return item;
+    });
+
+    return Promise.resolve("");
+  }
 
   /**
    * Search for recipes matching the given ingredients.
