@@ -16,10 +16,10 @@ import RestaurantPage from "./pages/Restaurant/RestaurantPage";
 import RecipeResults from "./pages/RecipeResults/RecipeResults";
 
 function App() {
-  useEffect(() => {
-    // Fetch supported models when the app loads
-    useChat.getState().getSupportedModels();
-  }, []);
+  // useEffect(() => {
+  //   // Fetch supported models when the app loads
+  //   useChat.getState().getSupportedModels();
+  // }, []);
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh", width: "100vw" }}>

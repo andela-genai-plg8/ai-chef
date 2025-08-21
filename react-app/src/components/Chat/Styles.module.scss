@@ -11,6 +11,10 @@
   border-radius: 16px;
   background: #fff;
 
+  .Header {
+    @extend .py-2;
+  }
+
   .MessageContainer {
     @extend .flex-grow-1;
     @extend .d-flex;
@@ -54,7 +58,7 @@
       &.Assistant {
         @extend .me-auto;
         background-color: #4564706a;
-        border-bottom-left-radius: 0px !important;
+        border-top-left-radius: 0px !important;
       }
 
       &.User {
@@ -137,6 +141,10 @@
       /* Optional: hide the gripper in older IE/Edge (if present) */
       &::-ms-expand {
         display: none;
+      }
+
+      &:disabled {
+        background-color: #fff !important;
       }
     }
 

@@ -6,6 +6,9 @@ import ReactMarkdown from "react-markdown";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useNavigate } from "react-router-dom";
 import classNames from "classnames";
+import { useModels } from "@/hooks/useRecipeQuery";
+import { Model } from "shared-types";
+import { Link } from "react-router-dom";
 
 type ChatMessageProps = {
   msg: { content: string; role: string };
@@ -15,7 +18,19 @@ type ChatMessageProps = {
 const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
   return (
     <div className={classNames(className)}>
-      <ReactMarkdown>{msg.content}</ReactMarkdown>
+      <ReactMarkdown components={{
+        a: ({ node, ...props }) => {
+          const href = props.href || "";
+
+          // If it's an internal link (relative URL), use React Router <Link>
+          if (href.startsWith("/")) {
+            return <Link to={href}>{props.children}</Link>;
+          }
+
+          // Otherwise, fall back to normal <a>
+          return <a {...props} />;
+        },
+      }}>{msg.content}</ReactMarkdown>
     </div>
   );
 };
@@ -34,9 +49,12 @@ const Chat = () => {
   const searchedRecipes = useRecipes((state) => state.searchedRecipes);
   const currentModel = useChat((state) => state.currentModel);
   const setCurrentModel = useChat((state) => state.setCurrentModel);
-  const supportedModels = useChat((state) => state.supportedModels);
+  // const supportedModels = useChat((state) => state.supportedModels);
   const sendMessage = useChat((state) => state.sendMessage);
   const addMessage = useChat((state) => state.addMessage);
+
+  const { data: { modelsByProviders: supportedModels, models } = { models: [], modelsByProviders: {} }, isLoading: isLoadingModels } = useModels(true);
+  // const supportedModels = modelsByProviders;
 
   useEffect(() => {
     if (open && messagesEndRef.current) {
@@ -86,7 +104,15 @@ const Chat = () => {
       addMessage({ role: "initial", content: "Hello" });
       sendMessage();
     }
-  }, [supportedModels, messages.length, sendMessage, addMessage, open]);
+
+    // if the list does not contain the current model, change the current model
+    if ((models || []).findIndex((m: Model) => m.id === currentModel) === -1) {
+      const firstModel = Object.values(supportedModels).flatMap((group: any) => group.models)[0];
+      if (firstModel) {
+        setCurrentModel(firstModel.id);
+      }
+    }
+  }, [models?.length, messages.length, sendMessage, addMessage, open]);
 
   // auto-resize textarea up to maxInputHeight
   const adjustTextareaHeight = () => {
@@ -94,7 +120,7 @@ const Chat = () => {
     if (!ta) return;
     ta.style.height = "auto";
     // determine a reasonable minimum height in px (match CSS --min-input-h)
-    const minInputH = 38; // matches SCSS --min-input-h fallback
+    const minInputH = 18; // matches SCSS --min-input-h fallback
     const scrollH = ta.scrollHeight || minInputH;
     const clamped = Math.min(Math.max(scrollH, minInputH), maxInputHeight);
     ta.style.height = `${clamped}px`;
@@ -104,6 +130,14 @@ const Chat = () => {
   useLayoutEffect(() => {
     adjustTextareaHeight();
   }, [input, maxInputHeight]);
+
+  const containerHeight: string = useMemo(() => {
+    if (inputRef.current && !inputRef.current.textContent.includes("\n")) {
+      return `${inputRef.current.getBoundingClientRect().height}px`;
+    }
+
+    return "auto"
+  }, [inputRef?.current?.textContent]);
 
   // Multiline input: Enter inserts newline; Enter without shift sends (matches previous behavior)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -115,17 +149,17 @@ const Chat = () => {
 
   const renderModelDropdown = useMemo(() => {
     if (!supportedModels || Object.keys(supportedModels).length === 0) {
-      return <option value="gpt-gpt-4o">GPT 4 - Omni</option>;
+      return <option disabled value="gpt-gpt-4o">Loading...</option>;
     }
+
     return Object.entries(supportedModels).map(([groupKey, group]) => {
       // Type assertion for group
-      const typedGroup = group as { title: string; models: Record<string, any> };
+      const provider = group as { title: string; models: Model[] };
       return (
-        <optgroup key={groupKey} label={typedGroup.title}>
-          {Object.keys(typedGroup.models).map((modelKey) => {
-            const model = typedGroup.models[modelKey];
+        <optgroup key={groupKey} label={provider.title}>
+          {(provider.models || []).map((model: Model) => {
             return (
-              <option key={model.id || model.value || model.title} value={modelKey}>
+              <option key={model.id || model.title} value={model.id}>
                 {model.title}
               </option>
             );
@@ -133,7 +167,7 @@ const Chat = () => {
         </optgroup>
       );
     });
-  }, [supportedModels]);
+  }, [models?.length]);
 
   //where there is at least one item in the searchedRecipes, navigate the user to recipes/search
   useEffect(() => {
@@ -193,17 +227,17 @@ const Chat = () => {
         <div ref={messagesEndRef} />
       </div>
       <div className={styles.InputGroup}
-        style={{ height: "auto", maxHeight: `${maxInputHeight}px` }}>
+        style={{ height: (containerHeight), maxHeight: maxInputHeight }}>
         <textarea
           rows={1}
           className={styles.Input}
-          placeholder="Ask a question"
+          placeholder="What do you want to prepare?"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading}
           ref={inputRef}
-          style={{ maxHeight: `${(maxInputHeight - 20)}px` }}
+          style={{ maxHeight: maxInputHeight, height: 22 }}
         />
         <button
           className={styles.SendButton}

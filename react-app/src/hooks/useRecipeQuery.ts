@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
 import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes } from '../api/recipes';
+import { getModels } from '@/api/models';
 
 // Keys for React Query cache
 export const recipeKeys = {
@@ -8,6 +9,13 @@ export const recipeKeys = {
   byIngredients: (ingredients: string[]) => [...recipeKeys.all, 'byIngredients', ingredients] as const,
   bySlug: (slug: string) => [...recipeKeys.all, 'bySlug', slug] as const,
   promoted: ['recipes', 'promoted'] as const,
+};
+
+// Keys for React Query cache
+export const modelKeys = {
+  all: ['models'] as const,
+  byId: (id: string) => [...modelKeys.all, 'byId', id] as const,
+  byProvider: (provider: string) => [...modelKeys.all, 'byProvider', provider] as const,
 };
 
 interface RecipeQueryParams {
@@ -41,5 +49,12 @@ export function usePromotedRecipesQuery(isPromoted: boolean = true) {
   return useQuery({
     queryKey: recipeKeys.promoted,
     queryFn: () => getPromotedRecipes(isPromoted),
+  });
+}
+
+export function useModels(isSupported: boolean = true) {
+  return useQuery({
+    queryKey: modelKeys.all,
+    queryFn: () => getModels(isSupported),
   });
 }
