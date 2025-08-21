@@ -193,7 +193,7 @@ const Chat = () => {
         <div ref={messagesEndRef} />
       </div>
       <div className={styles.InputGroup}
-        style={{ height: `${maxInputHeight}px` }}>
+        style={{ height: "auto", maxHeight: `${maxInputHeight}px` }}>
         <textarea
           rows={1}
           className={styles.Input}
@@ -203,7 +203,7 @@ const Chat = () => {
           onKeyDown={handleKeyDown}
           disabled={loading}
           ref={inputRef}
-          style={{ maxHeight: `${maxInputHeight}px` }}
+          style={{ maxHeight: `${(maxInputHeight - 20)}px` }}
         />
         <button
           className={styles.SendButton}
