@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ChatMessage, SupportedModels } from "shared-types";
-import axios from "axios";
 import { getAuth } from "firebase/auth";
 import { useRecipes } from "./useRecipes";
+import { useAppState } from "@/hooks/useAppState";
+import { getModels } from "@/api/models";
+import { sendChat } from "@/api/chat";
 
 export interface ChatStore {
   messages: ChatMessage[];
@@ -58,18 +60,22 @@ const useChat = create<ChatStore>()(
             // attach Firebase ID token if available
             let token: string | null = null;
             try {
-              const auth = getAuth();
-              token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+              // prefer app-level token set by useAuth
+              token = useAppState.getState().authToken ?? null;
+              if (!token) {
+                const auth = getAuth();
+                token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+              }
             } catch (e) {
               token = null;
             }
 
-            const res = await axios.get("/api/models", token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
-            return res;
+            const data = await getModels(token);
+            return data;
           })()
-            .then((res) => {
+            .then((data) => {
               // get the name of the default model
-              const currentModel = Object.values(res.data).reduce((acc: string, group: any) => {
+              const currentModel = Object.values(data).reduce((acc: string, group: any) => {
                 const modelGroup = group as {
                   title: string;
                   supported: boolean;
@@ -84,8 +90,8 @@ const useChat = create<ChatStore>()(
                 return acc;
               }, "");
 
-              set({ supportedModels: res.data, currentModel });
-              return res.data;
+              set({ supportedModels: data, currentModel });
+              return data;
             })
             .catch(() => {
               set({ supportedModels: {} });
@@ -125,23 +131,17 @@ const useChat = create<ChatStore>()(
           // include Firebase ID token if user is signed in
           let token: string | null = null;
           try {
-            const auth = getAuth();
-            token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+            // prefer app-level token set by useAuth
+            token = useAppState.getState().authToken ?? null;
+            if (!token) {
+              const auth = getAuth();
+              token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+            }
           } catch (e) {
             token = null;
           }
 
-          const res = await axios.post(
-            "/api/chat",
-            {
-              prompt: prompt,
-              context: contextWindow,
-              model: state.currentModel,
-            },
-            token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-          );
-
-          const data = res.data;
+          const data = await sendChat({ prompt: prompt, context: contextWindow, model: state.currentModel }, token);
 
           const newState = get();
           const allMessages = [...newState.messages, ...data.history, { role: "assistant", content: data.messages || data.error }];
