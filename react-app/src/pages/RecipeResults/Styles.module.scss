@@ -1,0 +1,36 @@
+@import "@/index.module.scss";
+
+.RecipeResults {
+  @extend .container-fluid;
+  padding: 0px;
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: scroll;
+
+  .Heading {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #ffffff;
+
+    .Title {
+      @extend .text-primary;
+      @extend .py-2;
+    }
+
+    .Search {
+      @extend .px-3;
+      @extend .py-1;
+      height: 120px;
+      max-height: 120px;
+      overflow-y: visible;
+      overflow-x: visible;
+    }
+  }
+  .RecipeList {
+    @extend .px-3;
+    @extend .py-3;
+    background-color: #4545453f;
+  }
+}

@@ -13,6 +13,7 @@ import Login from "@/pages/Login/Login";
 import AllRecipes from "./pages/AllRecipes/AllRecipes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import RestaurantPage from "./pages/Restaurant/RestaurantPage";
+import RecipeResults from "./pages/RecipeResults/RecipeResults";
 
 function App() {
   useEffect(() => {
@@ -49,7 +50,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recipes" element={<AllRecipes />} />
+          <Route path="/recipes/search" element={<RecipeResults />} />
           <Route path="/recipe/:slug" element={<RecipePage />} />
+          <Route path="/recipes/:slug" element={<RecipePage />} />
           <Route path="/restaurant/:slug" element={<ProtectedRoute><RestaurantPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><div>Settings page coming soon!</div></ProtectedRoute>} />
         </Routes>
