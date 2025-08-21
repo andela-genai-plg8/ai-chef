@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ChatMessage, SupportedModels } from "shared-types";
+import axios from "axios";
+import { getAuth } from "firebase/auth";
+import { useRecipes } from "./useRecipes";
 
 export interface ChatStore {
   messages: ChatMessage[];
@@ -15,13 +18,11 @@ export interface ChatStore {
   getSupportedModels: () => Promise<SupportedModels>;
   sendMessage: (input?: string) => Promise<void>;
 }
-import axios from "axios";
-import { useRecipes } from "./useRecipes";
 
 const CONTEXT_WINDOW_SIZE = 10;
 
 const useChat = create<ChatStore>()(
-  persist(
+  // persist(
     (set, get) => ({
       messages: [],
       currentModel: "gpt-gpt-4o",
@@ -53,8 +54,19 @@ const useChat = create<ChatStore>()(
             return current;
           }
           set((state) => ({ ...state, gettingModels: true }));
-          pendingPromise = axios
-            .get("/api/models")
+          pendingPromise = (async () => {
+            // attach Firebase ID token if available
+            let token: string | null = null;
+            try {
+              const auth = getAuth();
+              token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+            } catch (e) {
+              token = null;
+            }
+
+            const res = await axios.get("/api/models", token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+            return res;
+          })()
             .then((res) => {
               // get the name of the default model
               const currentModel = Object.values(res.data).reduce((acc: string, group: any) => {
@@ -110,13 +122,24 @@ const useChat = create<ChatStore>()(
           });
           set((state) => ({ ...state, sending: true }));
 
-          const state = get();
+          // include Firebase ID token if user is signed in
+          let token: string | null = null;
+          try {
+            const auth = getAuth();
+            token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+          } catch (e) {
+            token = null;
+          }
 
-          const res = await axios.post("/api/chat", {
-            prompt: prompt,
-            context: contextWindow,
-            model: state.currentModel,
-          });
+          const res = await axios.post(
+            "/api/chat",
+            {
+              prompt: prompt,
+              context: contextWindow,
+              model: state.currentModel,
+            },
+            token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+          );
 
           const data = res.data;
 
@@ -137,11 +160,11 @@ const useChat = create<ChatStore>()(
         }
       },
     }),
-    {
-      name: "chat-storage",
-      partialize: (state) => ({ messages: state.messages, currentModel: state.currentModel }),
-    }
-  )
+  //   {
+  //     name: "chat-storage",
+  //     partialize: (state) => ({ messages: state.messages, currentModel: state.currentModel }),
+  //   }
+  // )
 );
 
 export default useChat;
