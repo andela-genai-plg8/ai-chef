@@ -7,8 +7,8 @@ export class OllamaChef extends Chef {
     super(name, model, history);
   }
 
-  async getResponse({ prompt, callBack }: GetResponseParams = {}): Promise<string> {
-    await super.getResponse({ prompt, callBack });
+  async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
+    await super.getResponse({ prompt, ...rest });
     if (prompt) this.history.push({ role: "user", content: prompt });
 
     // Use Ollama local API

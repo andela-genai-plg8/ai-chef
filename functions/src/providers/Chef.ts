@@ -2,7 +2,7 @@ import axios from "axios";
 import { Recipe } from "shared-types";
 import * as admin from "firebase-admin";
 
-export type GetResponseParams = { prompt?: string; authorizationToken?: string; callBack?: (data: any) => void };
+export type GetResponseParams = { prompt?: string; authorizationToken?: string | null; callBack?: (data: any) => void };
 export type ChatItem = { role: string; content: string; tool_call_id?: string; [name: string]: any };
 export type ChatHistory = ChatItem[];
 
@@ -52,11 +52,11 @@ Example: “Hello again! How can I assist you today?”
 
 If a user who is logged in sends a normal greeting, respond with a personalized greeting.
 
-Example: "Hello <user's name>, I'm Chef ${name}. What can I help you cook today?"
+Example: "Hello [[user_name]], I'm Chef ${name}. What can I help you cook today?"
 
-Subsequent greetings should be brief.
+Subsequent greetings should be brief randomly mentioning the name of the user.
 
-Example: “Hello <user's first name>! How can I assist you today?”
+Example: “Hello [[user_name]]! How can I assist you today?”
 
 Do not trigger the 'recipe request workflow' unless the user explicitly asks about food or cooking.
 
@@ -170,34 +170,40 @@ Keep responses short unless the user explicitly asks for more explanation.
    * @param param
    */
   public async getResponse(param?: GetResponseParams): Promise<string> {
-
-    if (param?.authorizationToken) {
-      const match = param?.authorizationToken.match(/^Bearer (.+)$/);
-
-      if (match) {
-        const decodeToken = await admin.auth().verifyIdToken(match[1]);
+    try {
+      if (param?.authorizationToken) {
+        const decodeToken = await admin.auth().verifyIdToken(param.authorizationToken);
         const userRecord = await admin.auth().getUser(decodeToken.uid);
 
-        this.history = this.history.map((item) => {
-          if (item.content.includes("[[USER_DESCRIPTION]]")) {
-            return {
-              ...item,
-              content: item.content.replace(
-                "[[USER_DESCRIPTION]]",
-                `
+        if (userRecord) {
+          console.log("User is logged in", userRecord.displayName);
+          this.history = this.history.map((item) => {
+            if (item.role === "system" && item.content.includes("[[USER_DESCRIPTION]]")) {
+              return {
+                ...item,
+                content: item.content
+                  .replace(
+                    "[[USER_DESCRIPTION]]",
+                    `
 The user's name is ${userRecord.displayName}.
             `
-              ),
-            };
-          }
-          return item;
-        });
-        return Promise.resolve("");
+                  )
+                  .replace(/\[\[(user_name)\]\]/gi, userRecord.displayName || "Friend"),
+              };
+            }
+
+            return item;
+          });
+
+          return Promise.resolve("");
+        }
       }
-    }
+    } catch {}
 
     this.history = this.history.map((item) => {
-      if (item.content.includes("[[USER_DESCRIPTION]]")) {
+      console.log("User is anonymous");
+
+      if (item.role === "system" && item.content.includes("[[USER_DESCRIPTION]]")) {
         return {
           ...item,
           content: item.content.replace(

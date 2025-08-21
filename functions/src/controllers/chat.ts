@@ -7,6 +7,8 @@ import { Recipe } from "shared-types";
 export const chat = functions.https.onRequest(async (req: Request, res: Response) => {
   const history = req.body.context || [];
   const specifiedModel = req.body.model;
+  const authorizationToken = req.headers.authorization? req.headers.authorization.split(" ")[1] : null;
+
 
   try {
     const chef = ChefFactory.getChef({
@@ -15,7 +17,7 @@ export const chat = functions.https.onRequest(async (req: Request, res: Response
       history,
     });
 
-    const messages = await chef.getResponse();
+    const messages = await chef.getResponse({ authorizationToken });
     const recommendations = chef.getRecipeRecommendations();
     const ingredients = chef.getIngredients();
     const latestHistory = chef.getLatestHistory();

@@ -45,8 +45,8 @@ export class GeminiChef extends Chef {
 
   constructor(name: string, model: string, history: ChatHistory = []) {
     super(name, model, history);
-  // create a flexible client instance using the constructable GoogleGenAI class
-  this.client = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
+    // create a flexible client instance using the constructable GoogleGenAI class
+    this.client = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
   }
 
   private buildMessages() {
@@ -62,13 +62,14 @@ export class GeminiChef extends Chef {
     if (!response) return [];
     if (Array.isArray(response.functionCalls) && response.functionCalls.length) return response.functionCalls;
     if (response.output && Array.isArray(response.output.function_calls) && response.output.function_calls.length) return response.output.function_calls;
-    if (response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.function_call) return [response.choices[0].message.function_call];
+    if (response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.function_call)
+      return [response.choices[0].message.function_call];
     if (response.function_call) return [response.function_call];
     return [];
   }
 
-  async getResponse({ prompt, callBack }: GetResponseParams = {}): Promise<string> {
-    if (prompt) this.history.push({ role: "user", content: prompt });
+  async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
+    await super.getResponse({ prompt, ...rest });
 
     const callModel = async () => {
       const messages = this.buildMessages();
