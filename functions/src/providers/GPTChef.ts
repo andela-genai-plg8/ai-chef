@@ -78,6 +78,7 @@ export class GPTChef extends Chef {
             break;
           }
           case "display_recipes": {
+            console.log("display_recipes tool called.")
             try {
               const recipes = JSON.parse(functionCall.arguments).recipes || [];
               this.recipeRecommendations = recipes;

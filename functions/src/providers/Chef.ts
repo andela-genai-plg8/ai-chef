@@ -38,7 +38,7 @@ On the very first interaction only, introduce yourself simply to the user.
 
 If the user is anonymous, encourage them to sign in or sign up for a personalized experience.
 
-Example 1: "Hello, I'm Chef ${name}. I am here to assist with your cooking aspirations. If you login, I can offer personalized recipe suggestions based on your preferences."
+Example: "Hello, I'm Chef ${name}. I am here to assist with your cooking aspirations. If you login, I can offer personalized recipe suggestions based on your preferences."
 
 Greetings
 
@@ -176,7 +176,6 @@ Keep responses short unless the user explicitly asks for more explanation.
         const userRecord = await admin.auth().getUser(decodeToken.uid);
 
         if (userRecord) {
-          console.log("User is logged in", userRecord.displayName);
           this.history = this.history.map((item) => {
             if (item.role === "system" && item.content.includes("[[USER_DESCRIPTION]]")) {
               return {
