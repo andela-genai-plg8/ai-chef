@@ -5,21 +5,21 @@ import * as admin from "firebase-admin";
 import { Recipe } from "shared-types";
 
 export const chat = functions.https.onRequest(async (req: Request, res: Response) => {
-  const context = req.body.context || [];
+  const history = req.body.context || [];
+  const specifiedModel = req.body.model;
 
   try {
     const chef = ChefFactory.getChef({
       name: "Andel",
-      specifiedModel: req.body.model,
-      history: context.map(({ sender, content }: any) => ({
-        role: sender,
-        content,
-      })),
+      specifiedModel,
+      history,
     });
 
     const messages = await chef.getResponse();
     const recommendations = chef.getRecipeRecommendations();
     const ingredients = chef.getIngredients();
+    const latestHistory = chef.getLatestHistory();
+    const hasRecipeRecommendations = chef.getHasRecipeRecommendations();
 
     if (recommendations.length > 0) {
       if (!admin.apps.length) {
@@ -35,7 +35,7 @@ export const chat = functions.https.onRequest(async (req: Request, res: Response
       await addRecommendationsToFirestore(newRecommendations);
     }
 
-    res.json({ messages, recommendations, ingredients, status: "success" });
+    res.json({ messages, recommendations, ingredients, history: latestHistory, hasRecipeRecommendations, status: "success" });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

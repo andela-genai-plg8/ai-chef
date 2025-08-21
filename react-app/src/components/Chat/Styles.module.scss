@@ -5,11 +5,65 @@
   bottom: 24px;
   right: 24px;
   z-index: 9999;
-  max-width: 400px;
+  max-width: 500px;
   width: 100%;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   border-radius: 16px;
   background: #fff;
+
+  .MessageContainer {
+    @extend .flex-grow-1;
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .border;
+    @extend .rounded;
+    @extend .p-2;
+    @extend .mb-2;
+    @extend .bg-light;
+    min-height: 500px;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f8f9fa;
+
+    .Message {
+      @extend .text-start;
+      @extend .mb-2;
+      @extend .shadow;
+      @extend .rounded;
+      @extend .py-3;
+      @extend .p-2;
+      max-width: 70%;
+      margin-bottom: 8px;
+
+      // ensure that images are responsive
+      img {
+        @extend .img-fluid;
+        @extend .rounded;
+        @extend .py-2;
+        @extend .shadow;
+        max-width: calc(100% - 10px);
+        height: auto;
+      }
+
+      &.Assistant {
+        @extend .me-auto;
+        background-color: #4564706a;
+        border-bottom-left-radius: 0px !important;
+      }
+
+      &.User {
+        @extend .ms-auto;
+        background-color: #efefef;
+        border-bottom-right-radius: 0px !important;
+      }
+    }
+  }
 
   .CloseButton {
     @extend .btn;
@@ -27,6 +81,80 @@
 
     &:hover {
       color: #000;
+    }
+  }
+
+  .ModelDropdown {
+    margin-bottom: 0.5rem;
+    padding: 0 1rem;
+  }
+
+  .FormSelect {
+    @extend .form-select;
+    @extend .form-select-sm;
+  }
+
+  .InputGroup {
+    @extend .border;
+    @extend .m-2;
+    padding: 0 1rem 0 1rem;
+    border-radius: 30px !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    min-height: 60px;
+    max-height: 180px;
+
+    .Input {
+      @extend .form-control;
+      @extend .form-control-sm;
+      @extend .border-0;
+      @extend .my-0;
+      outline: none;
+      box-shadow: none;
+      &:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        border-color: #ced4da; // keep subtle focus border
+      }
+      /* Remove resize handle entirely */
+      resize: none;
+      /* Allow scrolling if content overflows */
+      overflow: auto;
+      height: 60px;
+      min-height: 60px;
+      max-height: 180px;
+      padding-right: 56px; /* space for the send button */
+
+      /* Hide the resize handle in WebKit-based browsers */
+      &::-webkit-resizer {
+        display: none;
+      }
+
+      /* Optional: hide the gripper in older IE/Edge (if present) */
+      &::-ms-expand {
+        display: none;
+      }
+    }
+
+    .SendButton {
+      @extend .btn;
+      @extend .btn-success;
+      @extend .btn-sm;
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     }
   }
 }
