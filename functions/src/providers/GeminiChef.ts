@@ -12,7 +12,7 @@ export class GeminiChef extends Chef {
   private client: any;
   private static tools: FunctionDeclaration[] = [
     {
-      name: "find_recipe",
+      name: "find_recipes",
       description: "Finds recipes based on ingredients. The response should be a JSON array of recipes.",
       parameters: {
         type: Type.OBJECT,
@@ -118,7 +118,7 @@ export class GeminiChef extends Chef {
         }
 
         switch (name) {
-          case "find_recipe": {
+          case "find_recipes": {
             const ingredientsArray = parsedArgs.ingredients || [];
             const ingredients = Array.isArray(ingredientsArray) ? ingredientsArray.join(",") : String(ingredientsArray || "");
             result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);

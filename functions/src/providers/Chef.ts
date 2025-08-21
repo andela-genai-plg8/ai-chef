@@ -76,7 +76,7 @@ When a user provides ingredients, requests a recipe, or mentions a specific dish
 
 Step 1: Find Recipes
 
-Call the find_recipe tool immediately to search for relevant recipes.
+Call the find_recipes tool immediately to search for relevant recipes.
 
 Constraint: Do not use internal knowledge or skip this step, even if the request is simple.
 
@@ -88,7 +88,7 @@ Example: "My apologies, I couldn't find any recipes with those ingredients. Perh
 
 Step 3: Format to JSON
 
-If results are found, convert them into a JSON array.
+If results are found, convert them into a JSON array but do not write the JSON in the response.
 
 Each object must follow this schema (omit missing fields):
 
@@ -118,19 +118,35 @@ Each object must follow this schema (omit missing fields):
 
 Step 4: Display Recipes
 
-Call the display_recipes tool with the JSON array as the sole argument.
+To display the recipes, call the display_recipes tool with the JSON array as the sole argument.
 
-Constraint: Do not skip this step.
+Constraint: If there is at least one recipe, do not skip this step.
 
 Step 5: Summarize
 
-After tool calls, provide a brief plain-text/markdown summary.
+After tool calls, provide a brief summary in markdown format.
 
-If at least one recipe was passed to display_recipes, include a link placeholder:
+If at least one recipe was found, the summary should look like this:
 
-Example: "I found a wonderful recipe for you: Savory Slow-Roasted Tomatoes with Anchovy. Enjoy! View Results"
+Example 1: "I found a wonderful recipe for you:
+[<recipe.name>]](/recipe/<slug>).
+![<recipe.name>]](<recipe.image>)
+Enjoy!"
 
-Constraint: Do not repeat full recipe details in the summary. Also, accompany each recipe in the summary with an image and a server relative link to its respective recipe page. The link to recipes has the format: /recipe/<slug>.
+Example 2: "I found 2 wonderful recipes for you:
+- [<recipe.name>]](/recipe/<slug>).
+![<recipe.name>]](<recipe.image>)
+
+- [<recipe.name>]](/recipe/<slug>).
+![<recipe.name>]](<recipe.image>)
+
+Enjoy!"
+
+If there are no recipes, simply state it.
+
+Example: O dear! I could not find any recipes prepared with rice and beans.
+
+Constraint: Do not give a blank summary, but do give fake recipes. Limit the summary to the recipes recieved from the find_recipes tool, make sure to state clearly that no recipes were found. Do not repeat full recipe details in the summary.
 
 Recipe Discussion Workflow
 
@@ -223,14 +239,18 @@ The user is anonymous.`
    * @param ingredients - A comma-separated string of ingredients to search for.
    * @returns A promise that resolves to an array of matching recipes.
    */
-  protected async searchForMatchingRecipe(ingredients: string): Promise<any> {
+  protected async searchForMatchingRecipe(ingredients: string | string[]): Promise<any> {
     // Search the application DB
-    this.ingredients = ingredients
-      .split(",")
-      .map((i) => i.trim())
-      .filter((i) => i.length > 0);
+    this.ingredients = Array.isArray(ingredients)
+      ? ingredients
+      : (ingredients || "")
+          .split(",")
+          .map((i) => i.trim())
+          .filter((i) => i.length > 0);
+
     const snapshot = await admin.firestore().collection("recipes").where("ingredientList", "array-contains-any", this.ingredients).get();
     const recipes = snapshot.docs.map((doc) => doc.data());
+    console.log("Returning recipes from searchForMatchingRecipe:", recipes.length, this.ingredients);
 
     this.recipeRecommendations = recipes as Recipe[];
     return this.recipeRecommendations;

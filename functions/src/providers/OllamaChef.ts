@@ -20,7 +20,7 @@ export class OllamaChef extends Chef {
           {
             type: "function",
             function: {
-              name: "find_recipe",
+              name: "find_recipes",
               description: "Finds recipes based on ingredients. The response is a JSON array of recipes.",
               parameters: {
                 type: "object",
@@ -53,19 +53,20 @@ export class OllamaChef extends Chef {
     let count = 0;
     let result: any = null;
     while (response.message.tool_calls && count < 5) {
-      console.log("Tool calls:", response.message.tool_calls);
       response.message.tool_calls.forEach(async (toolCall) => {
-        console.log("Tool call:", toolCall);
         this.addToHistory(response.message);
 
+        console
         // const functionCall = (toolCall as unknown as { function: Function }).function;
 
         switch (toolCall.function.name) {
-          case "find_recipe": {
-            const ingredients = toolCall.function.arguments.ingredients as string;
+          case "find_recipes": {
+            const ingredients = toolCall.function.arguments.ingredients;
+
             try {
               result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
-              console.log("Result from searchForMatchingRecipe:", result);
+              console.log("Result from searchForMatchingRecipe:", ingredients, result);
+
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;
               this.addToHistory({ role: "tool", content, tool_call_id: toolCall.function.name });
             } catch (error) {
@@ -77,6 +78,7 @@ export class OllamaChef extends Chef {
           }
           case "display_recipes": {
             try {
+              console.log("Displaying recipes:", toolCall.function.arguments.recipes);
               const recipes: Recipe[] = JSON.parse(toolCall.function.arguments.recipes) || [];
               this.recipeRecommendations = recipes;
 

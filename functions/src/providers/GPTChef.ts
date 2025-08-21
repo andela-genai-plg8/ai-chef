@@ -24,7 +24,7 @@ export class GPTChef extends Chef {
           {
             type: "function",
             function: {
-              name: "find_recipe",
+              name: "find_recipes",
               description: "Finds recipes based on ingredients. The response should be a JSON array of recipes.",
               parameters: {
                 type: "object",
@@ -64,7 +64,7 @@ export class GPTChef extends Chef {
         const functionCall = (toolCall as unknown as { function: Function }).function;
 
         switch (functionCall.name) {
-          case "find_recipe": {
+          case "find_recipes": {
             const ingredients = JSON.parse(functionCall.arguments).ingredients.join(",") as string;
             try {
               result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
