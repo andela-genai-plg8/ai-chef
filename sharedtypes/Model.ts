@@ -12,9 +12,6 @@ export type Model = {
 export type SupportedModels = {
   [provider: string]: {
     title: string;
-    supported: boolean;
-    models: {
-      [modelId: string]: Model;
-    };
+    models: Model[];
   };
 };
