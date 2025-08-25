@@ -24,10 +24,10 @@
       "@utils/*": ["utils/*"],
       "@hooks/*": ["hooks/*"],
       "@assets/*": ["assets/*"]
-    },
-        // "outDir": "build", // Removed outDir
+    }
+    // "outDir": "build", // Removed outDir
   },
-      "noEmit": true,
+  "noEmit": true,
   "include": ["src", "../sharedtypes"],
   "exclude": ["node_modules"]
 }

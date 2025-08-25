@@ -75,8 +75,8 @@ export class GeminiChef extends Chef {
       const messages = this.buildMessages();
 
       // Prefer chat.completions.create if available (chat-style)
-      if (this.client?.chat?.completions?.create) {
-        return await this.client.chat.completions.create({
+      if (this.client) {
+        return await this.client.models.generateContent({
           model: this.model,
           messages,
           functions: GeminiChef.tools,

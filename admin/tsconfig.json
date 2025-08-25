@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "sharedtypes": ["../sharedtypes"],
+      "sharedtypes/*": ["../sharedtypes/*"]
+    }
+  },
+  "include": ["src", "../sharedtypes"],
+  "exclude": ["node_modules", "lib"]
+}

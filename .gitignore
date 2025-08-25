@@ -36,3 +36,12 @@ public/*
 sharedtypes/*.js
 firebase.json
 public/index.html
+functions/*.log
+admin/data/recipes.csv
+admin/data/recipes.json
+admin/data/tokenDictionary.json
+admin/serviceAccountKey.json
+admin/data/aiInput.json
+admin/data/aiOutput.json
+admin/data/recipes.cleaned.1.json
+admin/data/recipes.cleaned.2.json
