@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { connectFirestoreEmulator } from "firebase/firestore";
 
 // Extend ImportMeta to include env property for Vite
 interface ImportMetaEnv {
@@ -31,6 +32,11 @@ if (!(getApps().length > 0)) {
 
   // add a message message to the user collection in firestore
   const db = getFirestore();
+
+  if (location.hostname === "localhost") {
+    connectFirestoreEmulator(db, "localhost", 8080);
+  }
+  
   const recipeCollection = collection(db, "recipes");
 
   // // get a collection of recipes sorted by the slug and delete one of every duplicate slug
@@ -66,23 +72,23 @@ if (!(getApps().length > 0)) {
   // });
 
   // recipeCollection.
-  // [
-  //   {
-  //       "name": "Savory Slow Roasted Tomatoes with Filet of Anchovy",
-  //       "image": "https://img.spoonacular.com/recipes/631757-312x231.jpg",
-  //       "ingredients": [
-  //           {
-  //               "name": "anchovy filets",
-  //               "quantity": "8"
-  //           }
-  //       ],
-  //       "instructions": [
-  //           {
-  //               "step": 1,
-  //               "instruction": "Slow roast tomatoes with anchovy filets.",
-  //               "duration": 1200
-  //           }
-  //       ]
-  //   },
-  // ].map((recipe) => addDoc(recipeCollection, recipe));
+  //  [
+  //    {
+  //        "name": "Savory Slow Roasted Tomatoes with Filet of Anchovy",
+  //        "image": "https://img.spoonacular.com/recipes/631757-312x231.jpg",
+  //        "ingredients": [
+  //            {
+  //                "name": "anchovy filets",
+  //                "quantity": "8"
+  //            }
+  //        ],
+  //        "instructions": [
+  //            {
+  //                "step": 1,
+  //                "instruction": "Slow roast tomatoes with anchovy filets.",
+  //                "duration": 1200
+  //            }
+  //        ]
+  //    },
+  //  ].map((recipe) => addDoc(recipeCollection, recipe));
 }

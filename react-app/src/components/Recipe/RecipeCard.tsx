@@ -28,7 +28,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
       <div style={{
         width: '100%',
         height: '200px',
-        backgroundImage: `url(${recipe.image})`,
+        backgroundImage: `url("${recipe.image === 'None' ? NO_IMAGE : recipe.image}")`,
         backgroundSize: '120%',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',

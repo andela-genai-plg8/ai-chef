@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         "/api": {
-          target: `http://localhost:5001/${projectName}/${region}`,
+          target: `http://127.0.0.1:5001/${projectName}/${region}`,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
