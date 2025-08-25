@@ -7,6 +7,7 @@ export type RecipeCardProps = {
   recipe: Recipe;
 }
 
+const NO_IMAGE = "https://media.istockphoto.com/id/1147544807/pl/wektor/obraz-miniatury-grafika-wektorowa.jpg?s=1024x1024&w=is&k=20&c=MxGOCjKYwJGcmDVb-KMdj_y_IhQEs7KfMB1BXbhRZRc=";
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
   return (
     <div

@@ -1,6 +1,7 @@
 import API, { OpenAI } from "openai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
 import { Chat } from "openai/resources/index";
+import { Recipe } from "shared-types";
 
 export class GPTChef extends Chef {
   private openai?: InstanceType<typeof OpenAI>;
@@ -10,6 +11,40 @@ export class GPTChef extends Chef {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_KEY,
     });
+  }
+
+  async searchForMatchingRecipeByVector(ingredients: string): Promise<any> {
+    
+    this.ingredients = ingredients.split('\n');
+    console.info("Vector search with ingredients: " + JSON.stringify(ingredients));
+    const response = await this.openai!.embeddings.create({
+      input: ingredients,
+      model: 'text-embedding-3-small', // or 'text-embedding-3-large'
+    });
+    const embedding = response.data[0].embedding;
+    console.info(`Searched embedding: '${ingredients}', length: ${embedding.length}`);
+    const COLLECTION = 'ingredients';
+    const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vector: {
+          name: "small_model",
+          vector: embedding,
+        },
+        top: 5,
+        with_payload: true,
+      }),
+    });
+
+    const data: any = await res.json();
+    let recipes = (data.result || []).map((d: any) => d.payload);
+    let scores = (data.result || []).map((d: any) => d.score);
+
+    console.log(`Returning recipes from searchForMatchingRecipeByVector: ${recipes.length} recipes, queried ingredients: ${ingredients}, scores: ${scores}`);
+
+    this.recipeRecommendations = recipes as Recipe[];
+    return this.recipeRecommendations;
   }
 
   async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
@@ -65,9 +100,9 @@ export class GPTChef extends Chef {
 
         switch (functionCall.name) {
           case "find_recipes": {
-            const ingredients = JSON.parse(functionCall.arguments).ingredients.join(",") as string;
+            const ingredients = JSON.parse(functionCall.arguments).ingredients.join("\n") as string;
             try {
-              result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
+              result = result !== null ? result : await this.searchForMatchingRecipeByVector(ingredients);
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;
               this.addToHistory({ role: "tool", content, tool_call_id: toolCall.id });
             } catch (error) {
@@ -80,11 +115,12 @@ export class GPTChef extends Chef {
           case "display_recipes": {
             console.log("display_recipes tool called.")
             try {
-              const recipes = JSON.parse(functionCall.arguments).recipes || [];
-              this.recipeRecommendations = recipes;
-
-              this.addToHistory({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
-              this.hasRecipeRecommendations = true;
+              //const recipes = JSON.parse(functionCall.arguments).recipes || [];
+              //this.recipeRecommendations = recipes;
+              this.addToHistory({ role: "tool", content: `${3} recommendations will be displayed.`, tool_call_id: toolCall.id });
+              //this.addToHistory({ role: "tool", content: `Recipes are:\n${JSON.stringify(recipes, null, 2)}.`, tool_call_id: toolCall.id });
+              //this.addToHistory({ role: "tool", content: `${recipes.length} recommendations will be displayed.`, tool_call_id: toolCall.id });
+              //this.hasRecipeRecommendations = true;
             } catch (error) {
               console.error("Error displaying recipes:", error);
               // const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);

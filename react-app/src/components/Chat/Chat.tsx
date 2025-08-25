@@ -132,7 +132,7 @@ const Chat = () => {
   }, [input, maxInputHeight]);
 
   const containerHeight: string = useMemo(() => {
-    if (inputRef.current && !inputRef.current.textContent.includes("\n")) {
+    if (inputRef.current && !inputRef.current.textContent?.includes("\n")) {
       return `${inputRef.current.getBoundingClientRect().height}px`;
     }
 
