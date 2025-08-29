@@ -46,8 +46,17 @@ functions/
 
 4. Start the Firebase emulators:
    ```bash
-   firebase emulators:start --only functions,firestore
+   firebase emulators:start --only functions,firestore --project ai-chef
    ```
+
+5. Start `qdrant` vector database:
+   ```bash
+   docker run -p 6333:6333 -p 6334:6334 -v $YOUR_STORAGE_DIR/qdrant_storage:/qdrant/storage qdrant/qdrant
+   ```
+
+6. Set up initial data
+
+Go to `http://127.0.0.1:5001/ai-chef/us-central1/bootstrap` to trigget the bootstrap function and set up firestore with initial recipes, calculate embeddings, and add them to qdrant database. It uses `RESOURCES_DIR` envronment variable and the recipes file uploaded as attachment in issue `#1`.
 
 ## Scripts
 

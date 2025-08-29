@@ -1,0 +1,11 @@
+Run qdrant locally with docker:
+
+  `docker run -p 6333:6333 -p 6334:6334 -v $YOUR_STORAGE_DIR/qdrant_storage:/qdrant/storage qdrant/qdrant`
+
+List properties of a collection:
+
+  `curl http://localhost:6333/collections/ingredients`
+
+Delete collection:
+
+  `curl -X DELETE http://localhost:6333/collections/ingredients`
