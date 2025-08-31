@@ -14,6 +14,7 @@ import AllRecipes from "./pages/AllRecipes/AllRecipes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import RestaurantPage from "./pages/Restaurant/RestaurantPage";
 import RecipeResults from "./pages/RecipeResults/RecipeResults";
+import RecipeAdd from "./pages/RecipeAdd/RecipeAdd";
 
 function App() {
   // useEffect(() => {
@@ -38,6 +39,11 @@ function App() {
             </Link>
           </li>
           <li className="nav-item mb-3">
+            <Link to="/recipe_add" className="nav-link text-white" aria-current="page" title="Add recipe">
+              <i className="bi bi-file-earmark-plus"></i>
+            </Link>
+          </li>          
+          <li className="nav-item mb-3">
             <Link to="/settings" className="nav-link text-white">
               <i className="bi bi-gear"></i>
             </Link>
@@ -50,6 +56,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recipes" element={<AllRecipes />} />
+          <Route path="/recipe_add" element={<RecipeAdd />} />
           <Route path="/recipes/search" element={<RecipeResults />} />
           <Route path="/recipe/:slug" element={<RecipePage />} />
           <Route path="/recipes/:slug" element={<RecipePage />} />

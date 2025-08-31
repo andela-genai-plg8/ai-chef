@@ -1,5 +1,5 @@
 import axios from "axios";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { addDoc, collection, getDocs, getFirestore } from "firebase/firestore";
 import { Recipe } from "shared-types";
 
 import { query, where, doc, getDoc } from "firebase/firestore";
@@ -19,6 +19,24 @@ export async function findRecipe({ ingredients }: FindRecipeParams): Promise<Rec
 
   return response.data;
 }
+
+export async function parseRecipe(candidateRecipe: string): Promise<Recipe> {
+  const response = await axios.post("/api/parseRecipe", {
+    candidateRecipe
+  });
+
+  if (!response.data) {
+    throw new Error("Recipe cannot be parsed");
+  }
+
+  const parsedRecipe = response.data as Recipe;
+  parsedRecipe.slug = parsedRecipe.name.toLowerCase().trim() // TODO: extract generating a slug to common function
+                    .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
+                    .replace(/\s+/g, '-')           // replace spaces with hyphens
+                    .replace(/-+/g, '-');           // collapse multiple hyphens
+  return parsedRecipe;
+}
+
 
 export async function getAllRecipes(): Promise<Recipe[]> {
   const db = getFirestore();
@@ -53,4 +71,11 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
     const data = doc.data();
     return { slug: data.slug, ...data } as Recipe;
   });
+}
+
+export async function addRecipe(recipe: Recipe): Promise<string> {
+  const db = getFirestore();
+  const recipesCollection = collection(db, "recipes");
+  const addedDoc = await addDoc(recipesCollection, recipe);
+  return addedDoc.id
 }
