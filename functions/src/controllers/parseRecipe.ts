@@ -1,6 +1,10 @@
 import * as functions from "firebase-functions";
 import { Request, Response } from "express";
 import OpenAI from "openai";
+import { Recipe } from "shared-types";
+import { getFirestore } from "firebase-admin/firestore";
+import * as admin from "firebase-admin";
+import { randomUUID } from 'crypto';
 
 export const parseRecipe = functions.https.onRequest(async (req: Request, res: Response) => {
   const recipeText: string = req.body.candidateRecipe || "";
@@ -8,10 +12,28 @@ export const parseRecipe = functions.https.onRequest(async (req: Request, res: R
   console.info("Parsing new recipe:\n" + recipeText);
 
   try {
-    let openai = new OpenAI({
+    
+    const parsedRecipe = await extractRecipe(recipeText);
+    parsedRecipe.slug = parsedRecipe.name.toLowerCase().trim() // TODO: extract generating a slug to common function
+                  .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
+                  .replace(/\s+/g, '-')           // replace spaces with hyphens
+                  .replace(/-+/g, '-');           // collapse multiple hyphens
+    const newRecipeId = await addRecipe(parsedRecipe);
+    console.info(`ID of new recipe: ${newRecipeId}`);
+
+    let [_, __, vector] = await calculateEmbedding(parsedRecipe);
+    await storeEmbedding(parsedRecipe, vector);
+    res.json(parsedRecipe);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+async function extractRecipe(recipeText: string): Promise<Recipe> {
+  
+   let openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
-
     
     const schema = {
       type: 'object',
@@ -71,8 +93,59 @@ export const parseRecipe = functions.https.onRequest(async (req: Request, res: R
     });
 
     let parsedRecipe = response.choices[0]?.message?.content;
-    res.json(JSON.parse(parsedRecipe ?? ""));
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return JSON.parse(parsedRecipe || "");
+}
+
+async function addRecipe(recipe: Recipe): Promise<string> {
+
+  if (!admin.apps.length) {
+      admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      databaseURL: process.env.DATABASE_URL,
+      });
   }
-});
+  const addedDoc = await admin.firestore().collection("recipes").add(recipe);
+  return addedDoc.id
+}
+
+async function calculateEmbedding(recipe: Recipe): Promise<[string, string, number[]]> {
+  let openai = new OpenAI({
+    apiKey: process.env.OPENAI_KEY,
+  });
+
+    let embeddedText = recipe.ingredients.map((ing: any) => ing.name).join('\n');
+
+    const embeddings = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: embeddedText,
+        encoding_format: "float",
+    });
+
+    let embedding = embeddings.data[0];
+    let vector = embedding.embedding;
+ 
+    return [recipe.slug ?? "", embeddedText, vector];
+}
+
+// TODO: extract duplicate code from bootstrap
+async function storeEmbedding(recipe: Recipe, vector: number[]): Promise<any> {
+  const COLLECTION = 'ingredients';
+  const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+      points: [
+          {
+              id: randomUUID(),
+              payload: recipe,
+              vector: {
+                  small_model: vector,
+                  large_model: vector,
+              },
+          },
+      ],
+      }),
+  });
+
+  return await res.json();
+}

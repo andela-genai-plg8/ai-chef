@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ImageGallery from 'react-image-gallery';
 import "react-image-gallery/styles/css/image-gallery.css";
 import classNames from 'classnames';
-import { addRecipe, parseRecipe } from '@/api/recipes';
+import { parseRecipe } from '@/api/recipes';
 
 function RecipeAdd() {
   const location = useParams();
@@ -28,8 +28,7 @@ function RecipeAdd() {
   async function parseRecipeClicked() {
     console.info("'Parse recipe' clicked with recipe: \n" + recipeToParse);
     const parsedRecipe = await parseRecipe(recipeToParse);
-    const storedRecipeId = await addRecipe(parsedRecipe);
-    console.info(`ID of new recipe: ${storedRecipeId}`);
+    console.info(`New recipe: ${parsedRecipe}`);
     navigate(`/recipe/${parsedRecipe.slug}`);
   }
   async function uploadRecipeClicked() {

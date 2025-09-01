@@ -30,10 +30,6 @@ export async function parseRecipe(candidateRecipe: string): Promise<Recipe> {
   }
 
   const parsedRecipe = response.data as Recipe;
-  parsedRecipe.slug = parsedRecipe.name.toLowerCase().trim() // TODO: extract generating a slug to common function
-                    .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
-                    .replace(/\s+/g, '-')           // replace spaces with hyphens
-                    .replace(/-+/g, '-');           // collapse multiple hyphens
   return parsedRecipe;
 }
 
@@ -71,11 +67,4 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
     const data = doc.data();
     return { slug: data.slug, ...data } as Recipe;
   });
-}
-
-export async function addRecipe(recipe: Recipe): Promise<string> {
-  const db = getFirestore();
-  const recipesCollection = collection(db, "recipes");
-  const addedDoc = await addDoc(recipesCollection, recipe);
-  return addedDoc.id
 }
