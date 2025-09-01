@@ -47,10 +47,6 @@ function RecipeAdd() {
           <textarea placeholder='Paste the recipe here' value={recipeToParse} onChange={(e) => setRecipeToParse(e.target.value)}></textarea>
           <button onClick={parseRecipeClicked}>Parse recipe</button>
         </div>
-        <div className={styles.RightColumn}>
-          <textarea readOnly={true} placeholder='Parsed recipe will be shown here'></textarea>
-          <button onClick={uploadRecipeClicked}>Upload recipe</button>
-        </div>
       </div>
       <div className={styles.TopColumns}>
         <div className={styles.LeftColumn}>
