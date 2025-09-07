@@ -1,5 +1,5 @@
 import axios from "axios";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { addDoc, collection, getDocs, getFirestore } from "firebase/firestore";
 import { Recipe } from "shared-types";
 
 import { query, where, doc, getDoc } from "firebase/firestore";
@@ -19,6 +19,20 @@ export async function findRecipe({ ingredients }: FindRecipeParams): Promise<Rec
 
   return response.data;
 }
+
+export async function parseRecipe(candidateRecipe: string): Promise<Recipe> {
+  const response = await axios.post("/api/parseRecipe", {
+    candidateRecipe
+  });
+
+  if (!response.data) {
+    throw new Error("Recipe cannot be parsed");
+  }
+
+  const parsedRecipe = response.data as Recipe;
+  return parsedRecipe;
+}
+
 
 export async function getAllRecipes(): Promise<Recipe[]> {
   const db = getFirestore();

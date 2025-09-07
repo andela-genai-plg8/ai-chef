@@ -5,6 +5,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import csv from "csv-parser";
 import * as admin from "firebase-admin";
+import { randomUUID } from 'crypto';
 
 export const bootstrap = functions.https.onRequest(async (req: Request, res: Response) => {
 
@@ -153,7 +154,6 @@ async function setupVectorStore(recipes: any[], vectors: any[]) {
         });
     }
 
-    let id = 1;
     // 3. Add a record
     async function addRecord(recipe: any, recipe_embedding: number[]) {
         const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points`, {
@@ -162,7 +162,7 @@ async function setupVectorStore(recipes: any[], vectors: any[]) {
             body: JSON.stringify({
             points: [
                 {
-                    id: id++,
+                    id: randomUUID(),
                     payload: recipe,
                     vector: {
                         small_model: recipe_embedding,
