@@ -13,20 +13,36 @@ export class GPTChef extends Chef {
     });
   }
 
+  async getIngredientNames(ingredientListBlogs: string[]): Promise<any> {
+    await super.getIngredientNames(ingredientListBlogs);
+
+    let response = await this.openai!.chat.completions.create({
+      model: this.model,
+      messages: this.history as API.ChatCompletionMessageParam[],
+    });
+
+    // extract the JSON array from the response of the model
+    const match = response.choices[0]?.message?.content?.match(/^\{[\s\S\w\W]*\}/s);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+
+    return [];
+  }
+
   async searchForMatchingRecipeByVector(ingredients: string): Promise<any> {
-    
-    this.ingredients = ingredients.split('\n');
+    this.ingredients = ingredients.split("\n");
     console.info("Vector search with ingredients: " + JSON.stringify(ingredients));
     const response = await this.openai!.embeddings.create({
       input: ingredients,
-      model: 'text-embedding-3-small', // or 'text-embedding-3-large'
+      model: "text-embedding-3-small", // or 'text-embedding-3-large'
     });
     const embedding = response.data[0].embedding;
     console.info(`Searched embedding: '${ingredients}', length: ${embedding.length}`);
-    const COLLECTION = 'ingredients';
+    const COLLECTION = "ingredients";
     const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         vector: {
           name: "small_model",
@@ -113,7 +129,6 @@ export class GPTChef extends Chef {
             break;
           }
           case "display_recipes": {
-            console.log("display_recipes tool called.")
             try {
               //const recipes = JSON.parse(functionCall.arguments).recipes || [];
               //this.recipeRecommendations = recipes;

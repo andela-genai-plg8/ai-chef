@@ -17,6 +17,8 @@ export abstract class ChefFactory {
     const provider = specifiedModel?.replace(/^([^-]+)\-[^\n]+$/i, "$1");
     const model = specifiedModel.substring(provider.length + 1); // Remove the "gpt-" or "ollama-" prefix
 
+    console.log(`Creating ${provider} chef with model ${model} from specified model: ${specifiedModel}`);
+
     switch (provider) {
       case "gpt":
         return new GPTChef(name, model, history);
