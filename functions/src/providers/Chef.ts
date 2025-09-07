@@ -2,7 +2,7 @@ import axios from "axios";
 import { Recipe } from "shared-types";
 import * as admin from "firebase-admin";
 
-export type GetResponseParams = { prompt?: string; authorizationToken?: string | null; callBack?: (data: any) => void };
+export type GetResponseParams = { systemPrompt?: string; prompt?: string; authorizationToken?: string | null; callBack?: (data: any) => void };
 export type ChatItem = { role: string; content: string; tool_call_id?: string; [name: string]: any };
 export type ChatHistory = ChatItem[];
 
@@ -180,6 +180,78 @@ Keep responses short unless the user explicitly asks for more explanation.
     }
   }
 
+  async getIngredientNames(ingredientListBlogs: string[]): Promise<any> {
+    const response = await this.getResponse({
+      prompt: `You are given a JSON array of ingredient strings.
+
+Task: Extract only the ingredient names, ignoring numbers, quantities, and units.
+
+Output Format:
+Return a raw JSON map of objects in the following structure:
+
+
+{
+  "<original_name>": {
+    "word": "<singular_form_of_main_ingredient>",
+    "plural": "<plural_form_of_main_ingredient>",
+    "variations": ["<variations_based_on_usage_in_original_name>"]
+  },
+  "<original_name>": {
+    "word": "<singular_form_of_main_ingredient>",
+    "plural": "<plural_form_of_main_ingredient>",
+    "variations": ["<variations_based_on_usage_in_original_name>"]
+  }
+}
+
+
+
+Rules:
+
+- The key must be the original (possibly misspelled) ingredient string.
+
+- Correct spelling where necessary.
+
+- For phrases, identify the main ingredient and any modifiers (e.g., "ground beef", "beef" is the main ingredient).
+
+- Always include both singular and plural (unless identical).
+
+- Add other natural variations (e.g., hyphenated, spaced, descriptive forms) in variations.
+
+- Do not include any numbers, measurements, or units.
+
+- Output only the raw JSON array (no explanations, no markdown).
+
+Example Input:
+
+["1 bag of riceee", "beans", "with 10 tomotoe", "pickled-gherkins and curry-powder", "bottle-apple-cider"]
+
+
+Example Output:
+
+{
+  "riceee": {"word": "rice", "plural": "rices", "variations": []},
+  "beans": {"word": "bean", "plural": "beans", "variations": []},
+  "baby-shrimp": {"word": "shrimp", "plural": "shrimps", "variations": ["baby shrimp", "baby shrimps", "baby-shrimp", "baby-shrimps"]},
+  "smoked-mackerel-fillet": {"word": "mackerel", "plural": "mackerel", "variations": ["smoked-mackerel-fillet", "smoked-mackerel-fillets", "smoked mackerel fillet", "smoked mackerel fillets", "mackerel fillet", "mackerel fillets"]},
+  "tomotoe": {"word": "tomato", "plural": "tomatoes", "variations": []},
+  "curry-powder": {"word": "curry", "plural": "curries", "variations": ["curry powder", "curry-powder"]},
+  "bottle-apple-cider": {"word": "apple", "plural": "apples", "variations": ["bottled apple cider", "bottle apple cider"]},
+  "pickled-gherkins": {"word": "gherkin", "plural": "gherkins", "variations": ["pickled gherkins", "pickled-gherkins", "pickled gherkin", "pickled-gherkin"]}
+}
+
+
+Input:
+
+${JSON.stringify(ingredientListBlogs)}`,
+      systemPrompt: `You are a helpful assistant chef who can help to review and identify recipe related information such as names or appropriate ingredient units/measure.
+Do not make any tool calls.`,
+    });
+
+    console.log("Ingredient names response:", response);
+
+    // return response.split("\n").filter((item) => item.length > 0);
+  }
+
   /**
    * To be implemented by subclass. Pass the contexts to the model and returns the model's response.
    * It should also pass tools to the model if available.
@@ -187,13 +259,26 @@ Keep responses short unless the user explicitly asks for more explanation.
    */
   public async getResponse(param?: GetResponseParams): Promise<string> {
     try {
+      // if there is a systemPrompt, replace the exising system prompt with the one provided
+      if (param?.systemPrompt) {
+        this.history = this.history.map((item: ChatItem) => {
+          if (item.role === "system") {
+            return {
+              ...item,
+              content: param.systemPrompt,
+            } as ChatItem;
+          }
+          return item;
+        });
+      }
+
       if (param?.authorizationToken) {
         const decodeToken = await admin.auth().verifyIdToken(param.authorizationToken);
         const userRecord = await admin.auth().getUser(decodeToken.uid);
 
         if (userRecord) {
           this.history = this.history.map((item) => {
-            if (item.role === "system" && item.content.includes("[[USER_DESCRIPTION]]")) {
+            if (item.role === "system") {
               return {
                 ...item,
                 content: item.content
