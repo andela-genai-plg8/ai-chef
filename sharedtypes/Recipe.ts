@@ -12,6 +12,11 @@ export type PreparationStep = {
   duration: number | string; // in minutes
 };
 
+export type Word = {
+  value: number;
+  word: string;
+}
+
 export type Recipe = {
   name: string;
   slug?: string;

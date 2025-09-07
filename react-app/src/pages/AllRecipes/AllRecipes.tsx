@@ -10,6 +10,8 @@ function AllRecipes() {
 
   const items = searchedRecipes?.length > 0 ? searchedRecipes : data;
 
+  console.log(items, data, searchedRecipes)
+
   return (
     <div className={styles.AllRecipes}>
       <div className={styles.Heading}>
