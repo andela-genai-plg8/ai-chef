@@ -6,6 +6,7 @@ functions/lib/
 functions/.env*
 functions/node_modules/
 functions/.package-lock.json
+functions/*.log
 
 # Firebase local state and emulator files
 .firebase/
