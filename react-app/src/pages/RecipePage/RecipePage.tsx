@@ -41,20 +41,9 @@ function RecipePage() {
       {/* <div ref={sentinelRef} style={{ height: 1, width: '100%' }} /> */}
       <div className={styles.TopColumns}>
         <div className={styles.LeftColumn}>
-          <div className={styles.Section} style={{ marginBottom: 0 }} ref={descriptionRef}>
+          <div className={styles.Section} style={{ marginBottom: 0, height: (imageGalleryDim.height) }} ref={descriptionRef}>
             <h2>Description</h2>
             <p className={styles.description}>{recipe.description}</p>
-          </div>
-          <div className={classNames(styles.Section, styles.Ingredients)} style={{ marginBottom: 0, height: (imageGalleryDim.height - ingredientHeight) } }>
-            <h2>Ingredients</h2>
-            <ul className={styles.IngredientList}>
-              {recipe.ingredients.map((ing, idx) => (
-                <li key={idx} className={styles.IngredientItem}>
-                  <span className={styles.IngredientName}>{ing.name}</span>
-                  <span className={styles.IngredientQty}>{ing.quantity} {ing.unit || ''}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
         <div className={styles.CenterColumn}>
@@ -81,16 +70,24 @@ function RecipePage() {
         </div>
       </div>
 
+      <div className={classNames(styles.Ingredients)} style={{ marginBottom: 0 }}>
+        <h2>Ingredients</h2>
+        <ul className={styles.IngredientList}>
+          {recipe.ingredients.map((ing, idx) => (
+            <li key={idx} className={styles.IngredientItem}>
+              <span className={styles.IngredientName}>{ing.name}</span>
+              <span className={styles.IngredientQty}>{ing.quantity} {ing.unit || ''}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div className={styles.TabsContainer}>
         <div className={styles.TabsRow}>
           <button
             className={activeTab === 'instructions' ? styles.ActiveTab : styles.Tab}
             onClick={() => setActiveTab('instructions')}
           >Instructions</button>
-          <button
-            className={activeTab === 'videos' ? styles.ActiveTab : styles.Tab}
-            onClick={() => setActiveTab('videos')}
-          >Videos</button>
           <button
             className={activeTab === 'restaurants' ? styles.ActiveTab : styles.Tab}
             onClick={() => setActiveTab('restaurants')}
@@ -100,19 +97,13 @@ function RecipePage() {
           {activeTab === 'instructions' && (
             <div className={styles.Section} style={{ marginTop: 0 }}>
               <h2>Instructions</h2>
-              <ol className={styles.InstructionsList}>
+              <ul className={styles.InstructionsList}>
                 {recipe.instructions.map((step, idx) => (
                   <li key={idx} className={styles.InstructionItem}>
-                    <span className={styles.StepNum}>Step {step.step}:</span> {step.instruction} {step.duration ? <span className={styles.StepDuration}>({step.duration} min)</span> : null}
+                    <span className={styles.StepNum}></span> {step.instruction} {step.duration ? <span className={styles.StepDuration}>({step.duration} min)</span> : null}
                   </li>
                 ))}
-              </ol>
-            </div>
-          )}
-          {activeTab === 'videos' && (
-            <div className={styles.section} style={{ marginTop: 0 }}>
-              <h2>Videos</h2>
-              <div className={styles.placeholder}>🎬 Recipe videos coming soon!</div>
+              </ul>
             </div>
           )}
           {activeTab === 'restaurants' && (

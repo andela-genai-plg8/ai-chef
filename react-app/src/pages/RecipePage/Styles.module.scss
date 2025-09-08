@@ -229,6 +229,7 @@
     margin-bottom: 1.5rem;
     line-height: 1.6;
     font-weight: 400;
+    p {text-align: left;}
   }
 
   .InfoCards {
@@ -262,10 +263,18 @@
   }
 
   .IngredientList {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     list-style: none;
-    padding: 0;
-    margin: 0;
-  }
+    padding: 10;
+    margin: 10px 5px;
+    border-radius: 20px;
+    box-shadow: 3px 2px 15px #454545;
+
+    &:hover{
+      box-shadow: 3px 2px 15px #454545;
+    }
+  
 
   .IngredientItem {
     display: flex;
@@ -289,6 +298,7 @@
     color: #2c3e50;
     display: flex;
     align-items: center;
+    text-transform: uppercase;
 
     &::before {
       content: "•";
@@ -306,6 +316,7 @@
     border-radius: 6px;
     font-size: 0.95rem;
   }
+}
 
   .InstructionsList {
     padding-left: 0;
@@ -319,6 +330,8 @@
     padding-left: 3rem;
     line-height: 1.6;
     color: #495057;
+    text-align: left;
+    list-style-type: none;
 
     &::before {
       counter-increment: step-counter;
