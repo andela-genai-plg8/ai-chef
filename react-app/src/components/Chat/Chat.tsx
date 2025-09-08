@@ -9,6 +9,7 @@ import classNames from "classnames";
 import { useModels } from "@/hooks/useRecipeQuery";
 import { Model } from "shared-types";
 import { Link } from "react-router-dom";
+import { FaMicrophone, FaSpeakap, FaTimes } from "react-icons/fa";
 
 type ChatMessageProps = {
   msg: { content: string; role: string };
@@ -213,7 +214,7 @@ const Chat = () => {
           onClick={() => setOpen(false)}
           title="Close"
         >
-          ×
+          <FaTimes />
         </button>
       </div>
       <div className={styles.ModelDropdown}>
@@ -258,23 +259,38 @@ const Chat = () => {
           ref={inputRef}
           style={{ maxHeight: maxInputHeight, height: 22 }}
         />
-        <button
-          className={styles.SendButton}
-          onClick={handleSend}
-          disabled={!input.trim() || loading}
-          aria-label="Send message"
-          title="Send"
-        >
-          {loading ? (
-            "..."
-          ) : (
-            // up arrow icon
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 4L12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 10L12 4L18 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </button>
+        <div className={styles.Buttons}>
+          <button
+            className={styles.SpeechButton}
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            aria-label="Send message"
+            title="Send"
+          >
+            {loading ? (
+              "..."
+            ) : (
+              <FaMicrophone />
+            )}
+          </button>
+          <button
+            className={styles.SendButton}
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            aria-label="Send message"
+            title="Send"
+          >
+            {loading ? (
+              "..."
+            ) : (
+              // up arrow icon
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 4L12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 10L12 4L18 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
