@@ -97,7 +97,7 @@ async function calcVectors(recipes: any[]) {
     // TODO: consider calculating embeddings once and reusing them on each bootstrap
 
     let openai = new OpenAI({
-      apiKey: process.env.OPENAI_KEY,
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     let embeddingsInput: [string, string, number[]][] = [];

@@ -9,7 +9,7 @@ export class GPTChef extends Chef {
   constructor(name: string, model: string, history: ChatHistory = []) {
     super(name, model, history);
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_KEY,
+      apiKey: process.env.OPENAI_API_KEY,
     });
   }
 
