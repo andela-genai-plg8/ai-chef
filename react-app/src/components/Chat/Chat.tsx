@@ -38,7 +38,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 const Chat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(true);
+  // Persisted open state (default: true). Guard access for SSR.
+  const [open, setOpen] = useState<boolean>(() => {
+    try {
+      if (typeof window === 'undefined') return true;
+      const stored = localStorage.getItem('chat.open');
+      return stored === null ? true : stored === 'true';
+    } catch (e) {
+      return true;
+    }
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -74,6 +83,16 @@ const Chat = () => {
     window.addEventListener("resize", computeMax);
     return () => window.removeEventListener("resize", computeMax);
   }, []);
+
+  // Persist `open` state to localStorage when it changes.
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem('chat.open', String(open));
+    } catch (e) {
+      // ignore storage errors (e.g., blocked in private mode)
+    }
+  }, [open]);
 
   // Adjust when messages change (container height might change)
   useEffect(() => {
