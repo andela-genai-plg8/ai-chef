@@ -11,6 +11,14 @@
   border-radius: 16px;
   background: #fff;
 
+  // on small screens
+  @media (max-width: 390px) {
+    bottom: 16px;
+    left: 8px;
+    right: 8px;
+    max-width: calc(100% - 16px);
+  }
+
   .Header {
     h5 {
       @extend .py-3;
