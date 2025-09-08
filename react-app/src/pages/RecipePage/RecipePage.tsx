@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import ImageGallery from 'react-image-gallery';
 import "react-image-gallery/styles/css/image-gallery.css";
 import classNames from 'classnames';
+import { FaBackward } from 'react-icons/fa';
 
 function RecipePage() {
   const location = useParams();
@@ -35,6 +36,9 @@ function RecipePage() {
   return (
     <div className={styles.RecipePage} ref={pageRef}>
       <div ref={titleRef} className={classNames(styles.Title, { [styles.TitleSticky]: isSticky })}>
+        <button className={styles.BackButton} onClick={() => window.history.back()} >
+          <FaBackward />
+        </button>
         <h1>{recipe.name}</h1>
       </div>
       {/* sentinel element just below the title to detect when it scrolls out of view */}
@@ -96,7 +100,6 @@ function RecipePage() {
         <div className={styles.TabContent}>
           {activeTab === 'instructions' && (
             <div className={styles.Section} style={{ marginTop: 0 }}>
-              <h2>Instructions</h2>
               <ul className={styles.InstructionsList}>
                 {recipe.instructions.map((step, idx) => (
                   <li key={idx} className={styles.InstructionItem}>
