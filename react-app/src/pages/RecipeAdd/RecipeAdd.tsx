@@ -40,12 +40,14 @@ function RecipeAdd() {
       <div ref={titleRef} className={classNames(styles.Title, { [styles.TitleSticky]: isSticky })}>
         <h1>Add new recipe</h1>
       </div>
+      <div className={styles["container-fluid"]}>
+        <textarea className={styles.RecipeTextarea} placeholder='Paste the recipe here' value={recipeToParse} onChange={(e) => setRecipeToParse(e.target.value)}></textarea>
+        <button className={styles.ParseButton} onClick={parseRecipeClicked}>Parse recipe</button>
+      </div>
       {/* sentinel element just below the title to detect when it scrolls out of view */}
       {/* <div ref={sentinelRef} style={{ height: 1, width: '100%' }} /> */}
       <div className={styles.TopColumns}>
         <div className={styles.LeftColumn}>
-          <textarea placeholder='Paste the recipe here' value={recipeToParse} onChange={(e) => setRecipeToParse(e.target.value)}></textarea>
-          <button onClick={parseRecipeClicked}>Parse recipe</button>
         </div>
       </div>
       <div className={styles.TopColumns}>

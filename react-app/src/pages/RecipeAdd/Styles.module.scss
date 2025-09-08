@@ -10,6 +10,49 @@
   background: linear-gradient(to bottom, #ffffff, #f8f9fa);
   overflow-y: scroll;
 
+  .RecipeTextarea {
+    width: 100%;
+    min-height: 150px;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    resize: vertical;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+    &:focus {
+      border-color: #fd7e14;
+      box-shadow: 0 4px 20px rgba(253, 126, 20, 0.2);
+      outline: none;
+    }
+  }
+
+  .ParseButton {
+    margin-top: 1rem;
+    background: linear-gradient(135deg, #fd7e14, #e74c3c);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #e74c3c, #fd7e14);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
   // Tabs
   .TabsContainer {
 
