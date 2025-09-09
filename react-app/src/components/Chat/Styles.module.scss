@@ -11,8 +11,7 @@
   border-radius: 16px;
   background: #fff;
 
-  // on small screens
-  @media (max-width: 390px) {
+  @include media-breakpoint-down(sm) {
     bottom: 16px;
     left: 8px;
     right: 8px;
