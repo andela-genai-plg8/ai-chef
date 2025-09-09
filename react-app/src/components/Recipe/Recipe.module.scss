@@ -49,15 +49,17 @@
   gap: 1rem;
   grid-template-columns: repeat(1, 1fr);
 
-  @media (min-width: 576px) {
+  @include media-breakpoint-down(sm) {
     // sm
     grid-template-columns: repeat(2, 1fr);
   }
-  @media (min-width: 768px) {
+
+  @include media-breakpoint-down(md) {
     // md
     grid-template-columns: repeat(3, 1fr);
   }
-  @media (min-width: 992px) {
+
+  @include media-breakpoint-down(lg) {
     // lg
     grid-template-columns: repeat(5, 1fr);
   }

@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes } from '../api/recipes';
+import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes, getRecipesPage } from '../api/recipes';
 import { getDictionary } from '../api/dictionary';
 import { getModels } from '@/api/models';
 
 // Keys for React Query cache
+// These keys provide deterministic cache identifiers for react-query.
+// Keep them serializable so cache lookups and invalidations are stable.
 export const recipeKeys = {
   all: ['recipes'] as const,
+  allPaged: (pageSize: number, startAfterId?: string) => [...recipeKeys.all, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
   byIngredients: (ingredients: string[]) => [...recipeKeys.all, 'byIngredients', ingredients] as const,
   bySlug: (slug: string) => [...recipeKeys.all, 'bySlug', slug] as const,
   promoted: ['recipes', 'promoted'] as const,
@@ -36,7 +39,26 @@ export function useRecipeQuery({ ingredients }: RecipeQueryParams) {
   });
 }
 
-export function useAllRecipesQuery() {
+/**
+ * useAllRecipesQuery
+ * - Without arguments, returns all recipes (not paginated).
+ * - When `pageSize` is provided (>0), performs cursor-based pagination by
+ *   calling `getRecipesPage(pageSize, startAfterId)` and using a paged cache key.
+ *
+ * Params:
+ *  - pageSize?: number - items to fetch per page (when omitted fetches everything)
+ *  - startAfterId?: string - optional Firestore document id used as cursor (startAfter)
+ */
+export function useAllRecipesQuery(pageSize?: number, startAfterId?: string) {
+  // If pageSize is provided, use cursor-based pagination
+  if (pageSize && pageSize > 0) {
+    return useQuery({
+      queryKey: recipeKeys.allPaged(pageSize, startAfterId),
+      queryFn: () => getRecipesPage(pageSize, startAfterId),
+    });
+  }
+
+  // otherwise return all recipes
   return useQuery({
     queryKey: recipeKeys.all,
     queryFn: getAllRecipes,
