@@ -46,3 +46,5 @@ admin/data/aiInput.json
 admin/data/aiOutput.json
 admin/data/recipes.cleaned.1.json
 admin/data/recipes.cleaned.2.json
+functions/qdrant_storage/raft_state.json
+functions/qdrant_storage/aliases/data.json
