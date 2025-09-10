@@ -1,0 +1,34 @@
+@import "@/index.module.scss";
+
+.Sidebar {
+  @extend .bg-dark;
+  @extend .text-white;
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .align-items-center;
+  @extend .py-4;
+
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  height: 100vh;
+
+  & > ul {
+    @extend .nav;
+    @extend .nav-pills;
+    @extend .flex-column;
+    @extend .mb-auto;
+    @extend .w-100;
+    @extend .text-center;
+
+    & > li {
+      @extend .nav-item;
+      @extend .mb-3;
+
+      .Link {
+        @extend .nav-link;
+        @extend .text-white;
+      }
+    }
+  }
+}
