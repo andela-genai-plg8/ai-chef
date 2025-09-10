@@ -57,17 +57,17 @@
 
   @include media-breakpoint-up(xl) {
     // lg
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 
   @include media-breakpoint-up(lg) {
     // md
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 
   @include media-breakpoint-up(md) {
     // sm
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .RecipeCard {
