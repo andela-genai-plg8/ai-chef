@@ -2,11 +2,6 @@ import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { Word } from "shared-types";
 
 
-interface FindRecipeParams {
-  ingredients: string[];
-}
-
-
 export async function getDictionary(): Promise<{ [word: string]: number }> {
   const db = getFirestore();
   const recipesCollection = collection(db, "dictionary");

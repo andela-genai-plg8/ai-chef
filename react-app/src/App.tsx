@@ -10,17 +10,20 @@ import useChat from "@/hooks/useChat";
 import Home from "@/pages/Home/Home";
 import RecipePage from "@/pages/RecipePage/RecipePage";
 import Login from "@/pages/Login/Login";
-import AllRecipes from "./pages/AllRecipes/AllRecipes";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import RestaurantPage from "./pages/Restaurant/RestaurantPage";
-import RecipeResults from "./pages/RecipeResults/RecipeResults";
-import RecipeAdd from "./pages/RecipeAdd/RecipeAdd";
+import AllRecipes from "@/pages/AllRecipes/AllRecipes";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import RestaurantPage from "@/pages/Restaurant/RestaurantPage";
+import RecipeResults from "@/pages/RecipeResults/RecipeResults";
+import RecipeAdd from "@/pages/RecipeAdd/RecipeAdd";
+import { useAppState } from "@/hooks/useAppState";
 
 function App() {
-  // useEffect(() => {
-  //   // Fetch supported models when the app loads
-  //   useChat.getState().getSupportedModels();
-  // }, []);
+  // load the dictionary
+  const { loadWords } = useAppState();
+
+  useEffect(() => {
+    loadWords();
+  }, [loadWords]);
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh", width: "100vw" }}>

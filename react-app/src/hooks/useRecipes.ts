@@ -3,6 +3,7 @@ import axios from "axios";
 import { IngredientName, Recipe } from "shared-types";
 import useChat from "./useChat";
 import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { useAppState } from "./useAppState";
 
 type RecipesState = {
   recipes: Recipe[];
@@ -44,9 +45,17 @@ export const useRecipes = create<RecipesState>(
     },
     findRecipe: async (): Promise<Recipe[] | undefined> => {
       const { ingredients } = get();
+      const words = useAppState.getState().words;
+      const tags = ingredients.map((ing) => {
+        const ings = ing.toLowerCase();
+        return words[ings] ? words[ings] : null;
+      }).filter(f => f !== null);
+
+      console.log("Tags:", tags);
       try {
         const response = await axios.post("/api/findRecipe", {
           ingredients,
+          tags
         });
         const recipes = response.data as Recipe[];
         set((state) => ({ ...state, recipes }));

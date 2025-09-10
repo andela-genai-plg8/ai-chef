@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import type { User } from "firebase/auth";
+import { getDictionary } from "@/api/dictionary";
 
 type AppState = {
   previousPath: string;
@@ -10,6 +11,8 @@ type AppState = {
   // store the current Firebase ID token when available
   authToken?: string | null;
   setAuthToken: (token: string | null) => void;
+  words: { [word: string]: number };
+  loadWords: () => void;
 };
 
 export const useAppState = create<AppState>(
@@ -20,5 +23,13 @@ export const useAppState = create<AppState>(
     setUser: (user: User | null) => set({ user }),
     authToken: null,
     setAuthToken: (token: string | null) => set({ authToken: token }),
+    words: {},
+    loadWords: async () => {
+      const words = await getDictionary();
+      if (words) {
+        console.log("Words", words)
+        set({ words });
+      }
+    },
   })
 );
