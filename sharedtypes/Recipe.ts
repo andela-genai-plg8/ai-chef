@@ -18,6 +18,7 @@ export type Word = {
 }
 
 export type Recipe = {
+  id: string;
   name: string;
   slug?: string;
   description?: string;

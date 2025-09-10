@@ -1,6 +1,10 @@
 @import "@/index.module.scss";
 
 .RecipeCard {
+  @extend .shadow;
+  @extend .rounded;
+  @extend .border-1;
+  @extend .shadow-lg;
   background: #f8f9fa;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -51,16 +55,34 @@
   gap: 1rem;
   grid-template-columns: repeat(1, 1fr);
 
-  @media (min-width: 576px) {
-    // sm
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 768px) {
-    // md
-    grid-template-columns: repeat(3, 1fr);
-  }
-  @media (min-width: 992px) {
+  @include media-breakpoint-up(xl) {
     // lg
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  @include media-breakpoint-up(lg) {
+    // md
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @include media-breakpoint-up(md) {
+    // sm
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .RecipeCard {
+    cursor: pointer;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .LoadMore {
+    grid-column: 1/-1;
   }
 }

@@ -5,13 +5,14 @@ import classNames from 'classnames';
 
 export type RecipeCardProps = {
   recipe: Recipe;
+  className?: string;
 }
 
 const NO_IMAGE = "https://media.istockphoto.com/id/1147544807/pl/wektor/obraz-miniatury-grafika-wektorowa.jpg?s=1024x1024&w=is&k=20&c=MxGOCjKYwJGcmDVb-KMdj_y_IhQEs7KfMB1BXbhRZRc=";
-const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
+const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, className }) => {
   return (
     <div
-      className={classNames(styles["RecipeCard"], styles["shadow"], styles["rounded"], styles["border-1"], styles["shadow-lg"])}
+      className={classNames(styles.RecipeCard, className || "")}
       style={{
         background: '#f8f9fa',
         borderRadius: '12px',
@@ -30,9 +31,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
         width: '100%',
         height: '200px',
         backgroundImage: `url("${recipe.image === 'None' ? NO_IMAGE : recipe.image}")`,
-        backgroundSize: '120%',
+        backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        backgroundPosition: 'center'
       }} />
       <div style={{ fontWeight: 700, fontSize: '1.15rem', margin: '0.5rem', textAlign: 'center' }}>{recipe.name}</div>
       <div style={{ fontSize: '0.95rem', color: '#555', marginBottom: '0.75rem', textAlign: 'center' }}>

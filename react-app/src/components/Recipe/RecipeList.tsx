@@ -100,18 +100,18 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate(`/recipe/${recipe.slug}`)}
                 >
-                  <RecipeCard recipe={recipe} />
+                  <RecipeCard className={styles.RecipeCard} recipe={recipe} />
                 </div>
               );
             })
             }
             {
               (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading) &&
-              <div ref={loadMoreRef}><span>Load more...</span></div>
+              <div className={styles.LoadMore}><span>Load more...</span></div>
             }
             {
               (typeof onGetMoreRecipes === 'function' && loading) &&
-              <div ref={loadMoreRef}><span>Loading...</span></div>
+              <div className={styles.LoadMore} ref={loadMoreRef}><span>Loading...</span></div>
             }
         </Fragment>
       )}
