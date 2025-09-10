@@ -263,7 +263,7 @@ const Chat = () => {
           <button
             className={styles.SpeechButton}
             onClick={handleSend}
-            disabled={!input.trim() || loading}
+            disabled={loading}
             aria-label="Send message"
             title="Send"
           >
