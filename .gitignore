@@ -4,6 +4,7 @@ yarn.lock
 
 functions/lib/
 functions/.env*
+!functions/.env*.example
 functions/node_modules/
 functions/.package-lock.json
 functions/*.log
@@ -29,6 +30,7 @@ yarn-error.log*
 
 # Environment files for React app
 react-app/.env*
+!react-app/.env*.example
 
 # General backup or temp files
 *~
