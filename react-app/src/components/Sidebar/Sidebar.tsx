@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "", style = {} }) => {
           </Link>
         </li>
         <li>
-          <Link to="/recipe_add" className={styles.Link} aria-current="page" title="Add recipe">
+          <Link to="/recipes/new" className={styles.Link} aria-current="page" title="Add recipe">
             <BsFileEarmarkCheck />
           </Link>
         </li>

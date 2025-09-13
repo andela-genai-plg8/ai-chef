@@ -19,6 +19,7 @@ export type Word = {
 
 export type Recipe = {
   id: string;
+  uuid?: string;
   name: string;
   slug?: string;
   description?: string;
@@ -29,6 +30,12 @@ export type Recipe = {
   calories?: number | string;
   ingredients: Ingredient[];
   ingredientList: string[];
-  ingredientListTokens?: number[];
+  tags?: number[];
   instructions: PreparationStep[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: string;
+  updatedBy?: string;
+  published?: boolean;
+  hasVectors?: boolean;
 };
