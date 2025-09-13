@@ -106,12 +106,12 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
             })
             }
             {
-              (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading) &&
-              <div className={styles.LoadMore}><span>Load more...</span></div>
+              (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading && listToRender.length > 0) &&
+              <div className={styles.LoadMore} ref={loadMoreRef}><span>Load more...</span></div>
             }
             {
               (typeof onGetMoreRecipes === 'function' && loading) &&
-              <div className={styles.LoadMore} ref={loadMoreRef}><span>Loading...</span></div>
+              <div className={styles.LoadMore}><span>Loading...</span></div>
             }
         </Fragment>
       )}

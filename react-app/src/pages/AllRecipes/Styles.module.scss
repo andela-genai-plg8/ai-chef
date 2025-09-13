@@ -1,6 +1,7 @@
 @import "@/index.module.scss";
 
 .AllRecipes {
+  --heading-height: 180px;
   @extend .container-fluid;
   padding: 0px;
   height: 100vh;
@@ -9,21 +10,59 @@
   overflow-y: scroll;
 
   .Heading {
+    height: var(--heading-height);
+    max-height: var(--heading-height);
     position: sticky;
     top: 0;
     z-index: 100;
     background-color: #ffffff;
 
-    .Title {
-      @extend .text-primary;
-      @extend .py-2;
+    .HeadingContainer {
+      display: grid;
+      grid-template-areas: "stack";
+      height: 100px;
+      width: 100%;
+      @extend .p-2;
+
+      .Links {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        grid-area: stack;
+        z-index: 1;
+        @extend .mb-2;
+        .BackLink {
+          @extend .btn;
+          @extend .me-2;
+
+          &:not(.Active) {
+            @extend .btn-secondary;
+          }
+
+          &.Active {
+            @extend .btn-primary;
+          }
+        }
+      }
+
+      .Title {
+        h1 {
+          @extend .text-primary;
+        }
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        grid-area: stack;
+        width: 100%;
+        height: 100%;
+      }
     }
 
     .Search {
       @extend .px-3;
       @extend .py-1;
-      height: 120px;
-      max-height: 120px;
+      height: var(--heading-height);
+      max-height: var(--heading-height);
       overflow-y: visible;
       overflow-x: visible;
     }
@@ -32,5 +71,7 @@
     @extend .px-3;
     @extend .py-3;
     background-color: #efefef;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
   }
 }

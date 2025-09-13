@@ -3,14 +3,21 @@ import styles from "./Styles.module.scss";
 import { useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
 import { useParams } from 'react-router-dom';
 import ImageGallery from 'react-image-gallery';
-// import "react-image-gallery/styles/css/image-gallery.css";
+import "react-image-gallery/styles/css/image-gallery.css";
 import classNames from 'classnames';
 import { FaBackward } from 'react-icons/fa';
 import { useMediaQuery } from 'react-responsive';
+import { Recipe } from 'shared-types';
 
-function RecipePage() {
-  const location = useParams();
-  const { data: recipe, isLoading } = useRecipeBySlugQuery(location.slug || "");
+export type RecipeDetailProps = {
+  recipe: Recipe;
+  mode: 'view' | 'edit';
+  className?: string;
+  onSave?: (updatedRecipe: Recipe) => void;
+  onPublish?: (updatedRecipe: Recipe) => void;
+}
+
+const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className }) => {
   const [activeTab, setActiveTab] = useState<'instructions' | 'videos' | 'restaurants'>('instructions');
 
   const imageGalleryRef = useRef<HTMLDivElement | null>(null);
@@ -30,15 +37,8 @@ function RecipePage() {
     return imageGalleryRef.current?.getBoundingClientRect() || { height: 400, width: 400 }; // Fallback to 400 if ref is not available
   }, [imageGalleryRef, pageRef]);
 
-  if (isLoading) {
-    return <div className={styles.RecipePage}>Loading...</div>;
-  }
-  if (!recipe) {
-    return <div className={styles.RecipePage}>Recipe not found.</div>;
-  }
-
   return (
-    <div className={styles.RecipePage} ref={pageRef}>
+    <div className={styles.RecipeDetail} ref={pageRef}>
       <div ref={titleRef} className={classNames(styles.Title, { [styles.TitleSticky]: isSticky })}>
         <button className={styles.BackButton} onClick={() => window.history.back()} >
           <FaBackward />
@@ -136,4 +136,4 @@ function RecipePage() {
   );
 }
 
-export default RecipePage;
+export default RecipeDetail;

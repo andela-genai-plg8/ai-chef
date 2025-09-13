@@ -1,2 +1,61 @@
+// Override Bootstrap primary button background to red (compile-time).
+// Must come before importing Bootstrap so the variables are used during compilation.
+// Primary color override: set both $primary and the theme-colors map so
+// Bootstrap components (including buttons) consistently use the new color.
+// Set primary color and button defaults. Keep this simple so Bootstrap picks
+// up $primary and uses it in component variables that are defined with !default.
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+$primary: #fd7e14; // Bright orange
+$primary-light: #e74c3c;
+$secondary: #d1c3a1; // Vibrant yellow
+
+
 // import bootstrap scss
 @import "bootstrap/scss/bootstrap";
+
+.text-primary {
+  color: $primary !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, $primary, lighten($primary-light, 5%));
+  border: none; // optional: remove border or set a gradient border
+  color: #fff;
+
+  &:hover {
+    background: linear-gradient(45deg, darken($primary-light, 5%), $primary);
+  }
+
+  &:focus,
+  &:active {
+    background: linear-gradient(45deg, darken($primary-light, 10%), $primary);
+  }
+}
+
+
+.btn-secondary {
+  background: linear-gradient(135deg, darken($secondary, 50%), $secondary);
+  border: none; // optional: remove border or set a gradient border
+  color: #fff;
+
+  &:hover {
+    background: linear-gradient(45deg, darken($secondary, 5%), lighten($secondary, 5%));
+  }
+
+  &:focus,
+  &:active {
+    background: linear-gradient(45deg, darken($secondary, 10%), lighten($secondary, 10%));
+  }
+}
+
+.App {
+  @extend .d-flex;
+  @extend .flex-grow-1;
+  @extend .align-items-start;
+  @extend .justify-content-center;
+  @extend .bg-light;
+  min-height: 100vh;
+  width: calc(100vw - 70px);
+}

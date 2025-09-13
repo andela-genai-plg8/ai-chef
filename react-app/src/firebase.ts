@@ -33,11 +33,11 @@ if (!(getApps().length > 0)) {
   // add a message message to the user collection in firestore
   const db = getFirestore();
 
-  if (location.hostname === "localhost") {
-    connectFirestoreEmulator(db, "localhost", 8080);
-  }
+  // if (location.hostname === "localhost") {
+  //   connectFirestoreEmulator(db, "localhost", 8080);
+  // }
   
-  const recipeCollection = collection(db, "recipes");
+  // const recipeCollection = collection(db, "recipes");
 
   // // get a collection of recipes sorted by the slug and delete one of every duplicate slug
   // onSnapshot(recipeCollection, (snapshot) => {

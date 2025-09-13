@@ -7,6 +7,11 @@ export class OllamaChef extends Chef {
     super(name, model, history);
   }
 
+  public async storeEmbeddings(recipes: Recipe[]): Promise<any> {
+
+    throw new Error("Method not implemented.");
+  }
+
   async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
     await super.getResponse({ prompt, ...rest });
     if (prompt) this.history.push({ role: "user", content: prompt });
@@ -64,7 +69,7 @@ export class OllamaChef extends Chef {
             const ingredients = toolCall.function.arguments.ingredients;
 
             try {
-              result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
+              result = result !== null ? result : await this.searchForMatchingRecipeByIngredientNames(ingredients);
               console.log("Result from searchForMatchingRecipe:", ingredients, result);
 
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;

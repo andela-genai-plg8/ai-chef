@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes, getRecipesPage } from '../api/recipes';
+import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes, getRecipesPage, getOwnerRecipesPage, getOwnRecipeBySlug } from '../api/recipes';
 import { getDictionary } from '../api/dictionary';
 import { getModels } from '@/api/models';
 
@@ -10,8 +10,10 @@ import { getModels } from '@/api/models';
 export const recipeKeys = {
   all: ['recipes'] as const,
   allPaged: (pageSize: number, startAfterId?: string) => [...recipeKeys.all, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
+  byOwner: (ownerId: string, pageSize: number, startAfterId?: string) => [...recipeKeys.all, 'owner', ownerId, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
   byIngredients: (ingredients: string[]) => [...recipeKeys.all, 'byIngredients', ingredients] as const,
   bySlug: (slug: string) => [...recipeKeys.all, 'bySlug', slug] as const,
+  byOwnerSlug: (userId: string, slug: string) => [...recipeKeys.all, 'byOwnerSlug', userId, slug] as const,
   promoted: ['recipes', 'promoted'] as const,
 };
 
@@ -49,12 +51,12 @@ export function useRecipeQuery({ ingredients }: RecipeQueryParams) {
  *  - pageSize?: number - items to fetch per page (when omitted fetches everything)
  *  - startAfterId?: string - optional Firestore document id used as cursor (startAfter)
  */
-export function useAllRecipesQuery(pageSize?: number, startAfterId?: string) {
+export function useAllRecipesQuery(pageSize?: number, startAfterId?: string, userId?: string) {
   // If pageSize is provided, use cursor-based pagination
   if (pageSize && pageSize > 0) {
     return useQuery({
-      queryKey: recipeKeys.allPaged(pageSize, startAfterId),
-      queryFn: () => getRecipesPage(pageSize, startAfterId),
+      queryKey: userId ? recipeKeys.byOwner(userId, pageSize, startAfterId) : recipeKeys.allPaged(pageSize, startAfterId),
+      queryFn: () => userId ? getOwnerRecipesPage(userId, pageSize, startAfterId) : getRecipesPage(pageSize, startAfterId),
     });
   }
 
@@ -69,6 +71,14 @@ export function useRecipeBySlugQuery(slug: string) {
   return useQuery({
     queryKey: recipeKeys.bySlug(slug),
     queryFn: () => getRecipeBySlug(slug),
+    enabled: !!slug,
+  });
+}
+
+export function useOwnRecipeBySlugQuery(userId: string, slug: string) {
+  return useQuery({
+    queryKey: recipeKeys.byOwnerSlug(userId, slug),
+    queryFn: () => getOwnRecipeBySlug(userId, slug),
     enabled: !!slug,
   });
 }
