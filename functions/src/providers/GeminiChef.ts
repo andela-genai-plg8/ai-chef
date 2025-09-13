@@ -1,5 +1,6 @@
 import { FunctionDeclaration, Type, GoogleGenAI } from "@google/genai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
+import { Recipe } from "shared-types/Recipe";
 
 // Modern / unified client-compatible Gemini wrapper.
 // Assumptions:
@@ -68,6 +69,12 @@ export class GeminiChef extends Chef {
     return [];
   }
 
+
+  public async storeEmbeddings(recipes: Recipe[]): Promise<any> {
+
+    throw new Error("Method not implemented.");
+  }
+
   async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
     await super.getResponse({ prompt, ...rest });
 
@@ -121,7 +128,7 @@ export class GeminiChef extends Chef {
           case "find_recipes": {
             const ingredientsArray = parsedArgs.ingredients || [];
             const ingredients = Array.isArray(ingredientsArray) ? ingredientsArray.join(",") : String(ingredientsArray || "");
-            result = result !== null ? result : await this.searchForMatchingRecipe(ingredients);
+            result = result !== null ? result : await this.searchForMatchingRecipeByIngredientNames(ingredients);
             const content = `This is the data from the tool: ${JSON.stringify(result)}`;
             this.history.push({ role: "tool", content, tool_call_id: fc.id || name });
             break;

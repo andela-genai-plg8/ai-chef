@@ -5,11 +5,12 @@ import { Recipe } from "shared-types";
 import { getFirestore } from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 import { randomUUID } from 'crypto';
+import { https } from "firebase-functions/v2";
 
-export const parseRecipe = functions.https.onRequest(async (req: Request, res: Response) => {
-  const recipeText: string = req.body.candidateRecipe || "";
+import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
 
-  console.info("Parsing new recipe:\n" + recipeText);
+export const parseRecipe = https.onCall(async (request: CallableRequest<any>, response?: any) => {
+  const recipeText: string = request.data.candidateRecipe || "";
 
   try {
 
@@ -18,14 +19,14 @@ export const parseRecipe = functions.https.onRequest(async (req: Request, res: R
       .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
       .replace(/\s+/g, '-')           // replace spaces with hyphens
       .replace(/-+/g, '-');           // collapse multiple hyphens
-    const newRecipeId = await addRecipe(parsedRecipe);
+    const newRecipeId = await addRecipe(parsedRecipe, request.auth?.uid || "");
     console.info(`ID of new recipe: ${newRecipeId}`);
 
     let [_, __, vector] = await calculateEmbedding(parsedRecipe);
     await storeEmbedding(parsedRecipe, vector);
-    res.json(parsedRecipe);
+    return parsedRecipe;
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    throw new HttpsError('internal', err.message);
   }
 });
 
@@ -98,7 +99,7 @@ async function extractRecipe(recipeText: string): Promise<Recipe> {
   return JSON.parse(parsedRecipe || "");
 }
 
-async function addRecipe(recipe: Recipe): Promise<string> {
+async function addRecipe(recipe: Recipe, createdBy: string): Promise<string> {
 
   if (!admin.apps.length) {
     admin.initializeApp({
@@ -106,7 +107,10 @@ async function addRecipe(recipe: Recipe): Promise<string> {
       databaseURL: process.env.DATABASE_URL,
     });
   }
-  const addedDoc = await admin.firestore().collection("recipes").add(recipe);
+
+  if (!createdBy) createdBy = "admin";
+  const createdAt = admin.firestore.FieldValue.serverTimestamp();
+  const addedDoc = await admin.firestore().collection("recipes").add({ ...recipe, tagged: false, createdBy, createdAt });
   return addedDoc.id
 }
 

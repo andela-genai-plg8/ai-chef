@@ -1,7 +1,11 @@
 import API, { OpenAI } from "openai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
-import { Chat } from "openai/resources/index";
+// import { Chat } from "openai/resources/index";
 import { Recipe } from "shared-types";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { QdrantVectorStore } from "@langchain/qdrant";
+import { Document } from "@langchain/core/documents";
+import { randomUUID } from "crypto";
 
 /**
  * GPTChef - provider that talks to OpenAI and a Qdrant vector store.
@@ -13,10 +17,16 @@ import { Recipe } from "shared-types";
  */
 export class GPTChef extends Chef {
   private openai?: InstanceType<typeof OpenAI>;
+  private embeddings?: OpenAIEmbeddings;
+  private store!: QdrantVectorStore;
 
   constructor(name: string, model: string, history: ChatHistory = []) {
     super(name, model, history);
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+      model: "text-embedding-3-small"
+    });
   }
 
   /**
@@ -87,13 +97,42 @@ export class GPTChef extends Chef {
     return this.recipeRecommendations;
   }
 
+  public async storeEmbeddings(recipes: Recipe[]): Promise<any> {
+    if (!recipes || recipes.length === 0) {
+      console.warn("No recipes provided to storeEmbeddings.");
+      return [];
+    }
+
+    if (!this.store) {
+      this.store = await QdrantVectorStore.fromExistingCollection(this.embeddings!, {
+
+        collectionName: process.env.QDRANT_COLLECTION,
+        url: process.env.QDRANT_URL || 'http://localhost:6333',
+        apiKey: process.env.QDRANT_API_KEY || undefined,
+      });
+    }
+
+
+    const documents: Document[] = recipes.map(r => new Document({
+      id: r.uuid || randomUUID(),
+      pageContent: (r?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/") || r.description || "",
+      metadata: {
+        doc_id: r.uuid,
+        slug: r.slug,
+        name: r.name,
+      }
+    }));
+
+    await this.store.addDocuments(documents);
+
+    return documents;
+  }
+
   async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
     await super.getResponse({ prompt, ...rest });
     if (prompt) this.addToHistory({ role: "user", content: prompt });
 
     const call = async () => {
-      console.log(this.history);
-      console.log("Calling OpenAI API...");
       return await this.openai!.chat.completions.create({
         model: this.model, // or any model you've pulled
         messages: this.history as API.ChatCompletionMessageParam[],

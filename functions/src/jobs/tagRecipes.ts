@@ -16,8 +16,8 @@ async function tag() {
   const recipesRef = admin.firestore().collection("recipes");
 
   // get recipes that either don't have a tag or have a tag set to false
-  const snapshot = await recipesRef.where("tagged", "!=", true).limit(30).get();
-  const recipes = snapshot.docs.map((doc) => ({ ...doc.data(), ref: doc.ref })) as (Recipe & { ref: FirebaseFirestore.DocumentReference })[];
+  const snapshot = await recipesRef.get();//.where("tagged", "!=", true).limit(30).get();
+  const recipes = snapshot.docs.map((doc) => ({ ...doc.data(), ref: doc.ref })).filter(r => r.ref) as (Recipe & { ref: FirebaseFirestore.DocumentReference })[];
 
   if (recipes.length === 0) {
     console.log("No recipes found to tag.");
@@ -83,7 +83,7 @@ async function tag() {
       ingredientWordsMap[word] = words[ingredientName.plural].value;
     });
 
-    
+
   });
 
   // insert the new words into firestore
@@ -100,25 +100,28 @@ async function tag() {
   // - create a tags array
   // - for each ingredient in the ingredientList, find the corresponding word in the dictionary and add its id to the tags array
   // - update the recipe with the new tags array and set tagged to true
-  const batch = admin.firestore().batch();
-  recipes.forEach((recipe) => {
-    if (!recipe.ref) return; // skip if no DocumentReference
+  // const batch = admin.firestore().batch();
 
-    // ensure ingredientList is an array before joining
-    const ingredientListArr = Array.isArray(recipe.ingredientList) ? recipe.ingredientList : [];
-    const ingredientListString = ingredientListArr.join(", ").toLowerCase();
+  // const calculatedEmbeddings = await chef.calculateEmbedding(recipes);
+  // await chef.storeEmbeddings(recipes.map((r, i) => ({ ...r, vector: calculatedEmbeddings[i][2] })));
 
-    const tagsSet = new Set<number>();
-    Object.keys(ingredientWordsMap).forEach((ingredientKey) => {
-      if (ingredientListString.includes(String(ingredientKey).toLowerCase())) {
-        tagsSet.add(ingredientWordsMap[ingredientKey]);
-      }
-    });
+  // recipes.forEach((recipe, index) => {
 
-    const tags = Array.from(tagsSet);
-    batch.update(recipe.ref, { tags, tagged: true });
-  });
-  await batch.commit();
+  //   // ensure ingredientList is an array before joining
+  //   const ingredientListArr = Array.isArray(recipe.ingredientList) ? recipe.ingredientList : [];
+  //   const ingredientListString = ingredientListArr.join(", ").toLowerCase();
+
+  //   const tagsSet = new Set<number>();
+  //   Object.keys(ingredientWordsMap).forEach((ingredientKey) => {
+  //     if (ingredientListString.includes(String(ingredientKey).toLowerCase())) {
+  //       tagsSet.add(ingredientWordsMap[ingredientKey]);
+  //     }
+  //   });
+
+  //   const tags = Array.from(tagsSet);
+  //   batch.update(recipe.ref, { tags, tagged: true });
+  // });
+  // await batch.commit();
 }
 
 // Runs every 5 minutes
