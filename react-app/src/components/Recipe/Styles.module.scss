@@ -86,3 +86,442 @@
     grid-column: 1/-1;
   }
 }
+
+.RecipeDetail {
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  padding-bottom: 2rem;
+  background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+  overflow-y: scroll;
+  overflow-x: hidden;
+
+  // Tabs
+  .TabsContainer {
+    // width: 100%;
+    // margin: 0 auto 2rem auto;
+    background: white;
+    // border-radius: 16px;
+    // box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+
+    .TabsRow {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      border-bottom: 2px solid #f1f3f5;
+      margin-bottom: 1rem;
+      padding: 0 1rem;
+    }
+    .Tab,
+    .ActiveTab {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding: 1rem 2rem;
+      cursor: pointer;
+      color: #6c757d;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      margin: 0 0.25rem;
+      position: relative;
+
+      &:hover {
+        color: #212529;
+        background: #f8f9fa;
+      }
+    }
+    .Tab {
+      background: transparent;
+    }
+    .ActiveTab {
+      background: #f8f9fa;
+      color: #212529;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, #fd7e14, #e74c3c);
+        border-radius: 3px 3px 0 0;
+      }
+    }
+    .Tab:not(:last-child) {
+      margin-right: 0.5rem;
+    }
+    .TabContent {
+      width: 100%;
+      min-height: 220px;
+      background: none;
+      @extend .px-3;
+    }
+  }
+
+  .TopColumns {
+    @extend .px-3;
+
+    display: flex;
+    flex-direction: row;
+    gap: 2.5rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+
+    @include media-breakpoint-down(sm) {
+      flex-direction: column;
+      flex-flow: column-reverse;
+      overflow-x: hidden;
+      max-width: 100%;
+    }
+
+    .LeftColumn {
+      flex: 2;
+      min-width: 280px;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+
+      .Section {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+
+        &.Ingredients {
+          background-color: inherit;
+        }
+
+        h2 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 1.5rem;
+          position: relative;
+
+          &::after {
+            content: "";
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(to right, #fd7e14, #e74c3c);
+            border-radius: 2px;
+          }
+        }
+      }
+    }
+
+    .CenterColumn {
+      flex: 0.5;
+      min-width: 280px;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .RightColumn {
+      flex: 2;
+      min-width: 340px;
+      max-width: 50vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .ImageGallery {
+        flex-direction: column;
+        align-items: center;
+        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
+        border-radius: 32px;
+        width: 100%;
+      }
+    }
+  }
+
+  .InfoCardsRow {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 480px;
+    justify-content: center;
+  }
+
+  .ThumbnailRow {
+    @extend .shadow;
+    display: flex;
+    gap: 1rem;
+    background: white;
+  }
+
+  .Thumbnail {
+    width: 90px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+    border: 2px solid white;
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .HeroInfo {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .Title {
+    @extend .py-lg-5;
+    @extend .py-sm-1;
+    display: flex;
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #212529;
+    // line-height: 1.2;
+    // letter-spacing: -0.02em;
+    // background: linear-gradient(45deg, #2c3e50, #34495e);
+    background: rgba(69, 69, 69, 0.5);
+    // background-color: red;
+    // background-clip: text;
+    // -webkit-background-clip: text;
+    // -webkit-text-fill-color: transparent;
+    /* make the title stick to the top of the scrolling container */
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    // background-color: white; /* ensure readable background when sticky */
+    padding-top: 0.8rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem; /* keep spacing when not sticky */
+    & > h1 {
+      align-self: center;
+      justify-self: center;
+      width: 100%;
+      text-align: center;
+    }
+    & > button {
+      padding: 0px 30px;
+      margin: 0;
+      background-color: transparent;
+      text-decoration: none;
+      border: none;
+    }
+
+    @include media-breakpoint-down(sm) {
+      display: flex;
+      flex-direction: column;
+      background: #efefef;
+
+      & > button {
+        max-height: 39px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+    }
+  }
+
+  .Description {
+    font-size: 1.15rem;
+    color: #495057;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-weight: 400;
+    p {
+      text-align: left;
+    }
+  }
+
+  .InfoCards {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .InfoCard {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    span {
+      font-size: 1.4rem;
+    }
+  }
+
+  .Ingredients {
+    @extend .px-3;
+
+    .IngredientList {
+      list-style-type: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      padding: 0px;
+
+      @include media-breakpoint-down(sm) {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .IngredientItem {
+        @extend .p-md-3;
+        @extend .py-md-4;
+        @extend .p-1;
+        @extend .py-2;
+        @extend .shadow;
+
+        display: flex;
+        justify-content: space-between;
+
+        .IngredientName {
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+
+        @include media-breakpoint-down(sm) {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+        }
+      }
+    }
+  }
+
+  .Placeholder {
+    background: #f5f5f5;
+    color: #aaa;
+    border-radius: 8px;
+    padding: 1.2rem;
+    text-align: center;
+    font-size: 1.15rem;
+    margin-top: 0.5rem;
+  }
+
+  .InstructionsList {
+    @extend .p-3;
+    display: flex;
+    flex-direction: column;
+    margin: 10px 5px;
+    counter-reset: step-counter;
+
+    // on bootstrap smallscreens
+    // use the flex column display
+    @include media-breakpoint-down(sm) {
+      display: flex;
+      flex-direction: column;
+      padding: 0 5px;
+      margin: 10px 0;
+      box-shadow: none;
+      height: auto;
+      overflow: visible;
+    }
+
+    .InstructionItem {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      position: relative;
+      padding-left: 3rem;
+      line-height: 1.6;
+      color: #495057;
+      text-align: left;
+      list-style-type: none;
+
+
+      &::before {
+        counter-increment: step-counter;
+        content: counter(step-counter);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #fd7e14, #e74c3c);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .StepNum {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+      }
+
+      .StepDuration {
+        display: inline-block;
+        color: #2c3e50;
+        font-size: 0.9rem;
+        font-weight: 600;
+        background: #e9ecef;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        margin-left: 0.75rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-left: 0.5rem;
+      }
+
+      .IngredientName {
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        text-transform: uppercase;
+
+        &::before {
+          content: "•";
+          color: #fd7e14;
+          margin-right: 0.5rem;
+          font-size: 1.4rem;
+        }
+      }
+
+      .IngredientQty {
+        color: #495057;
+        font-weight: 500;
+        background: #f8f9fa;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+    }
+  }
+}

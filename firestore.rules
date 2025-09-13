@@ -3,17 +3,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 9, 14);
+    // Users: only the authenticated user can read/write their document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Dictionary: public reads, writes only for admins
+    match /dictionary/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Models: public reads, writes only for admins
+    match /models/{modelId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Recipes: public reads. Create must set createdBy to the caller uid.
+    // Updates/deletes allowed only by the original creator or admins.
+    match /recipes/{recipeId} {
+      allow read: if true;
+
+      // create: authenticated user and createdBy must equal their uid
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+
+      // update/delete: only the original creator or admin may modify
+      allow update, delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
+    }
+
+    // Draft recipes: similar protections as recipes
+    match /draft-recipes/{recipeSlug} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
     }
   }
 }

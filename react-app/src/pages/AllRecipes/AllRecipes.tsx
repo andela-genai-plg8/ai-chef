@@ -1,24 +1,37 @@
 import styles from "./Styles.module.scss";
 import RecipeList from '@/components/Recipe/RecipeList';
 import Search from "@/components/Search/Search";
+import { useAuth } from "@/hooks/useAuth";
 import { useAllRecipesQuery } from '@/hooks/useRecipeQuery';
+import { all } from "axios";
+import classNames from "classnames";
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRecipes } from "@/hooks/useRecipes";
-import { Recipe } from "shared-types";
+import { CSSProperties } from "react";
+import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
-function AllRecipes() {
+export type AllRecipesProps = {
+  className?: string;
+  style?: CSSProperties;
+  personal?: boolean;
+};
+
+const AllRecipes: React.FC<AllRecipesProps> = ({ className, style, personal = false }) => {
   const PAGE_SIZE = 10;
   const [allRecipes, setAllRecipes] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined); // startAfter id used to fetch next page
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreTimeoutRef = useRef<number | null>(null);
   const [endOfList, setEndOfList] = useState<boolean>(false);
+  const user = useAuth().user;
+  const location = useLocation();
 
-  const { data: pageData, isLoading } = useAllRecipesQuery(PAGE_SIZE, cursor);
+  const filterByUser = location.pathname.startsWith("/my/") ? user?.uid : undefined;
+  const { data: pageData, isLoading } = useAllRecipesQuery(PAGE_SIZE, cursor, filterByUser);
 
   const lastDocId = useMemo(() => {
     return allRecipes.length > 0 ? allRecipes[allRecipes.length - 1].id : undefined;
-  }, [allRecipes.length]);
+  }, [allRecipes.length, allRecipes?.[allRecipes.length - 1]?.id]);
 
   const oldIds = useMemo(() => {
     return allRecipes.length > 0 ? allRecipes.map(r => r.id) : [];
@@ -41,7 +54,14 @@ function AllRecipes() {
         return [...prev, ...newRecipes];
       });
     }
+
+    if (lastDocId && recipes.length === 0) {
+      setEndOfList(true)
+      setTimeout(() => setEndOfList(false), 3000);
+    }
   }, [pageData, pageData?.recipes?.length, cursor]);
+
+
 
   // cleanup any pending timeout on unmount
   useEffect(() => {
@@ -53,7 +73,7 @@ function AllRecipes() {
   }, []);
 
   const handleGetMoreRecipes = () => {
-    if (loadingMore || isLoading) return;
+    if (isLoading) return;
     // if we don't have a lastDocId (no more pages), do nothing
     if (!lastDocId) return;
     setLoadingMore(true);
@@ -70,10 +90,23 @@ function AllRecipes() {
   return (
     <div className={styles.AllRecipes}>
       <div className={styles.Heading}>
-        <h1 className={styles.Title}>Search for Recipes</h1>
+        <div className={styles.HeadingContainer}>
+          <div className={styles.Links}>
+            <Link to="/recipes" className={classNames(styles.BackLink, { [styles.Active]: !filterByUser })}>All Recipes</Link>
+
+            <Link to="/my/recipes" className={classNames(styles.BackLink, { [styles.Active]: filterByUser })}>My Recipes</Link>
+
+          </div>
+          <div className={styles.Title}>
+            <h1>Search for Recipes</h1>
+          </div>
+        </div>
 
         <Search className={styles.Search} />
       </div>
+      {
+        filterByUser && !isLoading && allRecipes.length === 0 && <div className={styles.RecipeList}><p>You have not added recipes yet.</p></div>
+      }
       <RecipeList className={styles.RecipeList} recipeList={allRecipes} loading={isLoading} noMoreItems={endOfList} onGetMoreRecipes={handleGetMoreRecipes} />
     </div>
   );
