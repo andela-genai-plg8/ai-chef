@@ -9,6 +9,7 @@ import { useModels } from "@/hooks/useRecipeQuery";
 import { Model } from "shared-types";
 import { Link } from "react-router-dom";
 import { FaMicrophone, FaSpeakap, FaTimes } from "react-icons/fa";
+import axios from "axios";
 
 type ChatMessageProps = {
   msg: { content: string; role: string };
@@ -36,7 +37,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 };
 
 const Chat = () => {
-  const [input, setInput] = useState("");
+  let [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   // Persisted open state (default: true). Guard access for SSR.
   const [open, setOpen] = useState<boolean>(() => {
@@ -61,6 +62,9 @@ const Chat = () => {
   // const supportedModels = useChat((state) => state.supportedModels);
   const sendMessage = useChat((state) => state.sendMessage);
   const addMessage = useChat((state) => state.addMessage);
+
+  const [recorder, setRecorder] = useState<MediaRecorder|null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const { data: { modelsByProviders: supportedModels, models } = { models: [], modelsByProviders: {} }, isLoading: isLoadingModels } = useModels(true);
   // const supportedModels = modelsByProviders;
@@ -102,9 +106,18 @@ const Chat = () => {
     setMaxInputHeight(Math.max(80, Math.floor(h * 0.3)));
   }, [messages]);
 
+  const startListening = async () => {
+    await initRecorder();
+    recorder && recorder.start();
+  }
+
+  const handleVoiceSend = async () => {
+    recorder && recorder.state === "recording" && recorder.stop();
+  };
+
   const handleSend = async () => {
     setLoading(true);
-    if (!input.trim()) {
+    if (!input?.trim()) {
       setLoading(false);
       return;
     }
@@ -208,6 +221,49 @@ const Chat = () => {
     );
   }
 
+  const initRecorder = async () => {
+    if (!recorder) {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+
+      mediaRecorder.ondataavailable = (e) => {
+        chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        chunksRef.current = [];
+
+        const formData = new FormData();
+        formData.append("file", blob, "recording.webm");
+
+        const speechResponse = await axios.post(
+          "/api/speechToText",
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        var speechResponseData = speechResponse.data;
+        input = speechResponseData.speechMessage;
+        setInput(input);
+        setLoading(true);
+        if (!input?.trim()) {
+          setLoading(false);
+          return;
+        }
+
+        addMessage({ role: "user", content: input });
+        await sendMessage();
+        setInput("");
+        setLoading(false);
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      };
+
+      setRecorder(mediaRecorder);
+    }
+  };
+
   return (
     <div className={styles.Chat}>
       <div className={styles.Header}>
@@ -265,10 +321,14 @@ const Chat = () => {
         <div className={styles.Buttons}>
           <button
             className={styles.SpeechButton}
-            onClick={handleSend}
+            onMouseDown={startListening}
+            onTouchStart={startListening}
+            onMouseUp={handleVoiceSend}
+            onMouseLeave={handleVoiceSend}
+            onTouchEnd={handleVoiceSend}
             disabled={loading}
-            aria-label="Send message"
-            title="Send"
+            aria-label="Listen"
+            title="Push to talk"
           >
             {loading ? (
               "..."
@@ -279,7 +339,7 @@ const Chat = () => {
           <button
             className={styles.SendButton}
             onClick={handleSend}
-            disabled={!input.trim() || loading}
+            disabled={!input?.trim() || loading}
             aria-label="Send message"
             title="Send"
           >
