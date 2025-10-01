@@ -37,12 +37,14 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
             name: "recipes",
             func: (recipe: any): any => {
                 // Name,Rating,Description,Prep Time,Cook Time,Total Time,Servings,Ingredients,Image URL
+                const slug = recipe["Name"]
+                    .toLowerCase().trim()
+                    .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
+                    .replace(/\s+/g, '-')           // replace spaces with hyphens
+                    .replace(/-+/g, '-');           // collapse multiple hyphens
                 return {
-                    slug: recipe["Name"]
-                        .toLowerCase().trim()
-                        .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
-                        .replace(/\s+/g, '-')           // replace spaces with hyphens
-                        .replace(/-+/g, '-'),           // collapse multiple hyphens
+                    id: slug,
+                    slug,
                     name: recipe["Name"],
                     description: recipe["Description"],
                     image: recipe["Image URL"],
@@ -58,18 +60,18 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
             }
         },
         {
-            name: "models",
+            name: "models2",
             func: (model: any): any => {
                 return {
                     id: model["id"],
                     name: model["name"],
                     title: model["title"],
-                    provider: model["provider"],
-                    supported: model["supported"],
-                    model: model["model"],
-                    default: model["default"],
-                    max_tokens: model["max_tokens"],
-                    temperature: model["temperature"]
+                    provider: model["provider"] || "",
+                    supported: model["supported"] || false,
+                    model: model["model"] || "",
+                    default: model["default"] || false,
+                    max_tokens: model["max_tokens"] || 1024,
+                    temperature: model["temperature"] || 0.5
                 }
             }
         }
@@ -103,9 +105,19 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
             const batch = db.batch();
             const chunk = results.slice(i, i + BATCH_SIZE);
 
-            chunk.forEach((recipe) => {
-                const docRef = db.collection(dataCollection.name).doc(); // auto-ID
-                batch.set(docRef, recipe);
+            chunk.forEach((record) => {
+                // Derive document ID from record.id when available.
+                // Fallback to record.slug if present, otherwise use an auto-generated id.
+                const docId =
+                    record && record.id
+                        ? String(record.id)
+                        : undefined;
+
+                const docRef = docId
+                    ? db.collection(dataCollection.name).doc(docId)
+                    : db.collection(dataCollection.name).doc(); // auto-ID
+
+                batch.set(docRef, record);
             });
 
             await batch.commit();
