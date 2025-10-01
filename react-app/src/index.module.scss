@@ -15,6 +15,14 @@ $secondary: #d1c3a1; // Vibrant yellow
 // import bootstrap scss
 @import "bootstrap/scss/bootstrap";
 
+.multiline-truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;   /* Number of lines to show */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .text-primary {
   color: $primary !important;
 }

@@ -14,7 +14,7 @@ import { randomUUID } from "crypto";
  *   embedding/storage to the configured Chef provider.
  * - Marks recipes as having vectors and persists the last processed id.
  */
-async function tag() {
+async function runComputation() {
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
@@ -67,6 +67,7 @@ async function tag() {
     };
   }).filter(r => r.ref) as (Recipe & { ref: FirebaseFirestore.DocumentReference; })[];
 
+  // get any recipes whose hasVector field is not true
   const refreshedRecipes = (await recipesRef.where("hasVector", "!=", true).limit(30).get()).docs.map(doc => {
     const data = doc.data();
     return {
@@ -77,6 +78,10 @@ async function tag() {
   }) as (Recipe & { ref: FirebaseFirestore.DocumentReference; })[];
 
   recipes = [...recipes, ...refreshedRecipes];
+
+  // remove duplicates
+  recipes = Array.from(new Map(recipes.map(recipe => [recipe.ref, recipe])).values());
+  
   if (recipes.length === 0) {
     console.info("No recipes require embeddings at this time.");
     return;
@@ -112,14 +117,14 @@ async function tag() {
 
 // Runs every 5 minutes
 export const scheduleComputeVector = functions.scheduler.onSchedule("every 5 minutes", async (context) => {
-  await tag();
+  await runComputation();
 });
 
 // HTTP endpoint to trigger vector computation manually
 export const computeVector = functions.https.onRequest(
   { timeoutSeconds: 540 }, // max 540 seconds (9 minutes),
   async (req, res) => {
-    await tag();
+    await runComputation();
     res.send("Computed vectors for recipes.");
   }
 );

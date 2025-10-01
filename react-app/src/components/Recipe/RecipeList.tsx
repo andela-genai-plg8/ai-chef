@@ -96,11 +96,12 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
               return (
 
                 <div
+                  className={styles.RecipeCard}
                   key={`${recipe.id}-${recipe.slug}-${idx}`}
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate(`/recipe/${recipe.slug}`)}
                 >
-                  <RecipeCard className={styles.RecipeCard} recipe={recipe} />
+                  <RecipeCard recipe={recipe} />
                 </div>
               );
             })
