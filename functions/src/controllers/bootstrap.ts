@@ -30,13 +30,14 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
 
     const db = getFirestore();
 
-    const BATCH_SIZE = 500; // Firestore max batch size
+    const BATCH_SIZE = 200; // Firestore max batch size
 
     const data = [
         {
             name: "recipes",
             func: (recipe: any): any => {
                 // Name,Rating,Description,Prep Time,Cook Time,Total Time,Servings,Ingredients,Image URL
+                const currentTime = new Date();
                 const slug = recipe["Name"]
                     .toLowerCase().trim()
                     .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
@@ -55,12 +56,21 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
                             instruction: "No instructions provided, sorry!",
                             duration: 1200
                         }
-                    ]
+                    ],
+                    tagged: false,
+                    hasVectors: false,
+                    createdBy: "system",
+                    updatedBy: "system",
+                    createdAt: currentTime,
+                    updatedAt: currentTime,
+                    promoted: false,
+                    published: true,
+                    tags: []
                 }
             }
         },
         {
-            name: "models2",
+            name: "models",
             func: (model: any): any => {
                 return {
                     id: model["id"],
@@ -79,14 +89,9 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
     const allResults: { [key: string]: any[] } = {};
 
     data.forEach(async (dataCollection) => {
-        const snapshot = await db.collection(dataCollection.name).limit(1).get();
 
-        if (!snapshot.empty) {
-            console.log(`${dataCollection.name} already exist. Skipping bootstrap.`);
-            return [];
-        }
 
-        const results: any[] = [];
+        let results: any[] = [];
 
         await new Promise<void>((resolve, reject) => {
             fs.createReadStream(process.env.RESOURCES_DIR + `/${dataCollection.name}.csv`)
@@ -99,11 +104,42 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
                 .on("error", reject);
         });
 
-        results.splice(200); // TODO: adjust max amount of recipes imported to DB to avoid timeouts
-        console.log(`Uploading ${results.length} ${dataCollection.name}...`);
+        // get all items ids from teh collection to avoid duplicates
+        const existingIds: string[] = [];
+        await db.collection(dataCollection.name).get()
+            .then((snapshot) => {
+                snapshot.forEach(doc => {
+                    existingIds.push(doc.id);
+                });
+            });
+
+        console.log(`Existing IDs in ${dataCollection.name}:`, existingIds.length);
+
+        // Remove duplicates from results
+        results = results.filter(result => !existingIds.includes(result.id));
+
+
+        // results.splice(BATCH_SIZE); // TODO: adjust max amount of recipes imported to DB to avoid timeouts
+        console.log(`Uploading items to ${dataCollection.name} collection...`);
+        const totalBatches = Math.ceil(results.length / BATCH_SIZE);
+        console.log(`Total batches to upload: ${totalBatches}`);
+
         for (let i = 0; i < results.length; i += BATCH_SIZE) {
-            const batch = db.batch();
             const chunk = results.slice(i, i + BATCH_SIZE);
+            // const ids = chunk.map(r => r.id);
+
+            // const snapshot = await db.collection(dataCollection.name).where("__name__", "in", ids).get();
+
+            // remove the returned ids from the chunk, so we only add new records
+            // const existingIds = snapshot.docs.map(doc => doc.id);
+            // const newRecords = chunk.filter(record => !existingIds.includes(record.id));
+
+            if (chunk.length === 0) {
+                console.log(`${dataCollection.name}: no new items in this batch. Moving to next batch.`);
+                continue;
+            }
+
+            const batch = db.batch();
 
             chunk.forEach((record) => {
                 // Derive document ID from record.id when available.
@@ -121,7 +157,8 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
             });
 
             await batch.commit();
-            console.log(`Uploaded batch ${i / BATCH_SIZE + 1}`);
+            console.log(`Uploaded batch ${i / BATCH_SIZE + 1} of ${totalBatches} with ${chunk.length} new ${dataCollection.name} records.`);
+
         }
 
         console.log("All data uploaded.");
