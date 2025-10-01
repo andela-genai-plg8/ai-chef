@@ -9,21 +9,22 @@ import { randomUUID } from 'crypto';
 
 export const bootstrap = functions.https.onRequest(async (req: Request, res: Response) => {
 
+
     try {
-        let recipes = await setupFirestore();
-        let vectors = await calcVectors(recipes);
-        await setupVectorStore(recipes, vectors);
+        let results = await setupFirestore();
+        // let vectors = await calcVectors(results.recipes);
+        // await setupVectorStore(results.recipes, vectors);
         res.json({ status: "success" });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
 });
 
-async function setupFirestore(): Promise<any[]> {
+async function setupFirestore(): Promise<{ [key: string]: any[] }> {
     if (!admin.apps.length) {
         admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: process.env.DATABASE_URL,
+            credential: admin.credential.applicationDefault(),
+            databaseURL: process.env.DATABASE_URL,
         });
     }
 
@@ -31,65 +32,91 @@ async function setupFirestore(): Promise<any[]> {
 
     const BATCH_SIZE = 500; // Firestore max batch size
 
-    const snapshot = await db.collection("recipes").limit(1).get();
-    
-    if (!snapshot.empty) {
-        console.log("Recipes already exist. Skipping bootstrap.");
-        return [];
-    }
-
-    const results: any[] = [];
-
-    function makeDbRecipe(recipe: any): any {
-        // Name,Rating,Description,Prep Time,Cook Time,Total Time,Servings,Ingredients,Image URL
-        return {
-            slug: recipe["Name"]
-                    .toLowerCase().trim()
-                    .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
-                    .replace(/\s+/g, '-')           // replace spaces with hyphens
-                    .replace(/-+/g, '-'),           // collapse multiple hyphens
-            name: recipe["Name"],
-            description: recipe["Description"],
-            image: recipe["Image URL"],
-            ingredients: recipe["Ingredients"].split('|').map((ing: string) => ({name: ing, quantity: "?"})),
-            instructions: [
-                {
-                    step: 1,
-                    instruction: "No instructions provided, sorry!",
-                    duration: 1200
+    const data = [
+        {
+            name: "recipes",
+            func: (recipe: any): any => {
+                // Name,Rating,Description,Prep Time,Cook Time,Total Time,Servings,Ingredients,Image URL
+                return {
+                    slug: recipe["Name"]
+                        .toLowerCase().trim()
+                        .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
+                        .replace(/\s+/g, '-')           // replace spaces with hyphens
+                        .replace(/-+/g, '-'),           // collapse multiple hyphens
+                    name: recipe["Name"],
+                    description: recipe["Description"],
+                    image: recipe["Image URL"],
+                    ingredients: recipe["Ingredients"].split('|').map((ing: string) => ({ name: ing, quantity: "?" })),
+                    instructions: [
+                        {
+                            step: 1,
+                            instruction: "No instructions provided, sorry!",
+                            duration: 1200
+                        }
+                    ]
                 }
-            ]
+            }
+        },
+        {
+            name: "models",
+            func: (model: any): any => {
+                return {
+                    id: model["id"],
+                    name: model["name"],
+                    title: model["title"],
+                    provider: model["provider"],
+                    supported: model["supported"],
+                    model: model["model"],
+                    default: model["default"],
+                    max_tokens: model["max_tokens"],
+                    temperature: model["temperature"]
+                }
+            }
         }
-    }
+    ];
+    const allResults: { [key: string]: any[] } = {};
 
-    await new Promise<void>((resolve, reject) => {
-        fs.createReadStream(process.env.RESOURCES_DIR + "\\All_Recipe_Web_Scraping_Dataset.csv")
-        .pipe(csv())
-        .on("data", (data) => results.push(makeDbRecipe(data)))
-        .on("end", () => {
-            console.log("Parsed", results.length, "rows");
-            resolve();
-        })
-        .on("error", reject);
-    });
+    data.forEach(async (dataCollection) => {
+        const snapshot = await db.collection(dataCollection.name).limit(1).get();
 
-    results.splice(200); // TODO: adjust max amount of recipes imported to DB to avoid timeouts
-    console.log(`Uploading ${results.length} recipes...`);
-    for (let i = 0; i < results.length; i += BATCH_SIZE) {
-        const batch = db.batch();
-        const chunk = results.slice(i, i + BATCH_SIZE);
+        if (!snapshot.empty) {
+            console.log(`${dataCollection.name} already exist. Skipping bootstrap.`);
+            return [];
+        }
 
-        chunk.forEach((recipe) => {
-        const docRef = db.collection("recipes").doc(); // auto-ID
-        batch.set(docRef, recipe);
+        const results: any[] = [];
+
+        await new Promise<void>((resolve, reject) => {
+            fs.createReadStream(process.env.RESOURCES_DIR + `/${dataCollection.name}.csv`)
+                .pipe(csv())
+                .on("data", (data) => results.push(dataCollection.func(data)))
+                .on("end", () => {
+                    console.log("Parsed", results.length, "rows");
+                    resolve();
+                })
+                .on("error", reject);
         });
 
-        await batch.commit();
-        console.log(`Uploaded batch ${i / BATCH_SIZE + 1}`);
-    }
+        results.splice(200); // TODO: adjust max amount of recipes imported to DB to avoid timeouts
+        console.log(`Uploading ${results.length} ${dataCollection.name}...`);
+        for (let i = 0; i < results.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = results.slice(i, i + BATCH_SIZE);
 
-    console.log("All recipes uploaded.");
-    return results;
+            chunk.forEach((recipe) => {
+                const docRef = db.collection(dataCollection.name).doc(); // auto-ID
+                batch.set(docRef, recipe);
+            });
+
+            await batch.commit();
+            console.log(`Uploaded batch ${i / BATCH_SIZE + 1}`);
+        }
+
+        console.log("All data uploaded.");
+        allResults[dataCollection.name] = results;
+    });
+
+    return allResults;
 }
 
 async function calcVectors(recipes: any[]) {
@@ -97,11 +124,11 @@ async function calcVectors(recipes: any[]) {
     // TODO: consider calculating embeddings once and reusing them on each bootstrap
 
     let openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+        apiKey: process.env.OPENAI_API_KEY,
     });
 
     let embeddingsInput: [string, string, number[]][] = [];
-    for(let recipe of recipes) {
+    for (let recipe of recipes) {
         let embeddedText = recipe.ingredients.map((ing: any) => ing.name).join('\n');
         let slug = recipe.slug as string;
         embeddingsInput.push([slug, embeddedText, []]);
@@ -113,7 +140,7 @@ async function calcVectors(recipes: any[]) {
         encoding_format: "float",
     });
 
-    for(let embedding of embeddings.data) {
+    for (let embedding of embeddings.data) {
         let vector = embedding.embedding;
         let index = embedding.index;
         embeddingsInput[index][2] = vector;
@@ -160,16 +187,16 @@ async function setupVectorStore(recipes: any[], vectors: any[]) {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-            points: [
-                {
-                    id: randomUUID(),
-                    payload: recipe,
-                    vector: {
-                        small_model: recipe_embedding,
-                        large_model: recipe_embedding,
+                points: [
+                    {
+                        id: randomUUID(),
+                        payload: recipe,
+                        vector: {
+                            small_model: recipe_embedding,
+                            large_model: recipe_embedding,
+                        },
                     },
-                },
-            ],
+                ],
             }),
         });
 
@@ -182,17 +209,17 @@ async function setupVectorStore(recipes: any[], vectors: any[]) {
         await createCollection();
 
         let recipesMap: Record<string, any> = {};
-        for(let recipe of recipes) {
+        for (let recipe of recipes) {
             recipesMap[recipe.slug] = recipe;
         }
-        
+
         // TODO: add records in bulk instead one by one, for better performance
-        for(let vector of vectors) {
+        for (let vector of vectors) {
             await addRecord(recipesMap[vector[0]], vector[2]);
         }
 
     } else {
         console.log('Collection exists.');
     }
-    
+
 }
