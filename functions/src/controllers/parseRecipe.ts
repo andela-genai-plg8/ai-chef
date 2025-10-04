@@ -1,15 +1,15 @@
-import * as functions from "firebase-functions";
-import { Request, Response } from "express";
 import OpenAI from "openai";
 import { Recipe } from "shared-types";
-import { getFirestore } from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
-import { randomUUID } from 'crypto';
 import { https } from "firebase-functions/v2";
 
 import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
 
-export const parseRecipe = https.onCall(async (request: CallableRequest<any>, response?: any) => {
+export const parseRecipe = https.onCall(async (request: CallableRequest<any>) => {
+  console.log("parseRecipe called");
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'The function must be called while authenticated.');
+  }
   const recipeText: string = request.data.candidateRecipe || "";
 
   try {
@@ -22,8 +22,8 @@ export const parseRecipe = https.onCall(async (request: CallableRequest<any>, re
     const newRecipeId = await addRecipe(parsedRecipe, request.auth?.uid || "");
     console.info(`ID of new recipe: ${newRecipeId}`);
 
-    let [_, __, vector] = await calculateEmbedding(parsedRecipe);
-    await storeEmbedding(parsedRecipe, vector);
+    // let [_, __, vector] = await calculateEmbedding(parsedRecipe);
+    // await storeEmbedding(parsedRecipe, vector);
     return parsedRecipe;
   } catch (err: any) {
     throw new HttpsError('internal', err.message);
@@ -109,49 +109,50 @@ async function addRecipe(recipe: Recipe, createdBy: string): Promise<string> {
   }
 
   if (!createdBy) createdBy = "admin";
-  const createdAt = admin.firestore.FieldValue.serverTimestamp();
-  const addedDoc = await admin.firestore().collection("recipes").add({ ...recipe, tagged: false, createdBy, createdAt });
+  const createdAt = new Date();
+  const addedDoc = await admin.firestore().collection("recipes").add({ ...recipe, tagged: false, published: false, createdBy, updatedBy: createdBy, createdAt, updatedAt: createdAt, hasVectors: false });
+  
   return addedDoc.id
 }
 
-async function calculateEmbedding(recipe: Recipe): Promise<[string, string, number[]]> {
-  let openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+// async function calculateEmbedding(recipe: Recipe): Promise<[string, string, number[]]> {
+//   let openai = new OpenAI({
+//     apiKey: process.env.OPENAI_API_KEY,
+//   });
 
-  let embeddedText = recipe.ingredients.map((ing: any) => ing.name).join('\n');
+//   let embeddedText = recipe.ingredients.map((ing: any) => ing.name).join('\n');
 
-  const embeddings = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: embeddedText,
-    encoding_format: "float",
-  });
+//   const embeddings = await openai.embeddings.create({
+//     model: "text-embedding-3-small",
+//     input: embeddedText,
+//     encoding_format: "float",
+//   });
 
-  let embedding = embeddings.data[0];
-  let vector = embedding.embedding;
+//   let embedding = embeddings.data[0];
+//   let vector = embedding.embedding;
 
-  return [recipe.slug ?? "", embeddedText, vector];
-}
+//   return [recipe.slug ?? "", embeddedText, vector];
+// }
 
-// TODO: extract duplicate code from bootstrap
-async function storeEmbedding(recipe: Recipe, vector: number[]): Promise<any> {
-  const COLLECTION = 'ingredients';
-  const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      points: [
-        {
-          id: randomUUID(),
-          payload: recipe,
-          vector: {
-            small_model: vector,
-            large_model: vector,
-          },
-        },
-      ],
-    }),
-  });
+// // TODO: extract duplicate code from bootstrap
+// async function storeEmbedding(recipe: Recipe, vector: number[]): Promise<any> {
+//   const COLLECTION = 'ingredients';
+//   const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points`, {
+//     method: 'PUT',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({
+//       points: [
+//         {
+//           id: randomUUID(),
+//           payload: recipe,
+//           vector: {
+//             small_model: vector,
+//             large_model: vector,
+//           },
+//         },
+//       ],
+//     }),
+//   });
 
-  return await res.json();
-}
+//   return await res.json();
+// }
