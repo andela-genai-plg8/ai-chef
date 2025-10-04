@@ -1,8 +1,8 @@
-import axios from "axios";
-import { addDoc, collection, getDocs, getFirestore } from "firebase/firestore";
-import { Recipe } from "shared-types";
+import axios from "./axiosClient";
+// import { addDoc,  } from "firebase/firestore";
 
-import { query, where, doc, getDoc, orderBy, limit as fbLimit, startAfter } from "firebase/firestore";
+import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId } from "firebase/firestore";
+import { Recipe } from "shared-types";
 
 interface FindRecipeParams {
   ingredients: string[];
@@ -22,7 +22,7 @@ export async function findRecipe({ ingredients }: FindRecipeParams): Promise<Rec
 
 export async function parseRecipe(candidateRecipe: string): Promise<Recipe> {
   const response = await axios.post("/api/parseRecipe", {
-    candidateRecipe
+    data: { candidateRecipe }
   });
 
   if (!response.data) {
@@ -34,7 +34,7 @@ export async function parseRecipe(candidateRecipe: string): Promise<Recipe> {
 }
 
 
-export async function getAllRecipes(): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
+export async function getAll(): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
   const db = getFirestore();
   const recipesCollection = collection(db, "recipes");
   const snapshot = await getDocs(recipesCollection);
@@ -48,7 +48,7 @@ export async function getAllRecipes(): Promise<{ recipes: Recipe[]; lastDocId?: 
 }
 
 // Cursor-based pagination: returns recipes for the page and the lastDoc id for next page
-export async function getRecipesPage(pageSize: number = 10, startAfterId?: string): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
+export async function getPaged(pageSize: number = 10, startAfterId?: string): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
   const db = getFirestore();
   const recipesCollection = collection(db, "recipes");
 
@@ -79,11 +79,9 @@ export async function getRecipesPage(pageSize: number = 10, startAfterId?: strin
 }
 
 // Cursor-based pagination: returns recipes for the page and the lastDoc id for next page
-export async function getOwnerRecipesPage(ownerId: string, pageSize: number = 10, startAfterId?: string): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
+export async function getByOwnerPaged(ownerId: string, pageSize: number = 10, startAfterId?: string): Promise<{ recipes: Recipe[]; lastDocId?: string }> {
   const db = getFirestore();
   const recipesCollection = collection(db, "recipes");
-
-  console.log("Geting owner's recipes")
 
   let q;
   if (startAfterId) {
@@ -96,45 +94,73 @@ export async function getOwnerRecipesPage(ownerId: string, pageSize: number = 10
       q = query(recipesCollection, where("createdBy", "==", ownerId), orderBy('name'), startAfter(cursorDoc), fbLimit(pageSize));
     }
   } else {
-    q = query(recipesCollection, where("createdBy", "==", ownerId), orderBy('name'), fbLimit(pageSize));
+    // Use equality operator here for single-owner queries
+    q = query(
+      recipesCollection,
+      orderBy("name"),
+      where("createdBy", "==", ownerId),
+      fbLimit(pageSize)
+    );
   }
 
   const snapshot = await getDocs(q);
-  const recipes = snapshot.docs.map((d) => {
-    const data = d.data();
-    return { slug: data.slug, ...data, id: d.id } as Recipe;
-  });
 
+  let recipes: Recipe[] = [];
+  try {
+    recipes = snapshot.docs.map((d) => {
+      const data = d.data();
+      return { slug: data.slug, ...data, id: d.id } as Recipe;
+    });
+  } catch (e) {
+    console.error("Error fetching owner's recipes", e);
+  }
 
   const lastDoc = snapshot.docs[snapshot.docs.length - 1];
   const lastDocId = lastDoc ? lastDoc.id : undefined;
   return { recipes, lastDocId };
 }
 
-export async function getRecipeBySlug(slug: string): Promise<Recipe | null> {
+export async function getBySlug(slug: string): Promise<Recipe | null> {
   const db = getFirestore();
   const recipesCollection = collection(db, "recipes");
-  const slugQuery = query(recipesCollection, where("slug", "==", slug));
-  const snapshot = await getDocs(slugQuery);
-  if (snapshot.empty) {
-    return null;
-  }
-  const docData = snapshot.docs[0].data();
-  return { slug, ...docData } as Recipe;
-}
 
-export async function getOwnRecipeBySlug(userId:string, slug: string): Promise<Recipe | null> {
-  const db = getFirestore();
-  const recipesCollection = collection(db, `draft-recipes`);
-  const slugQuery = query(recipesCollection, where("slug", "==", slug));
-  const snapshot = await getDocs(slugQuery);
-  if (snapshot.empty) {
-    return null;
+  // 1) Try direct doc read by id (fast and no index required)
+  try {
+    const docSnap = await getDoc(doc(db, "recipes", slug));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return { slug: docSnap.id, ...data } as Recipe;
+    }
+  } catch (err) {
+    // If getDoc failed due to permissions or other reasons, log and continue
+    console.warn("getDoc by id failed, will try slug query:", err);
   }
 
-  const docData = snapshot.docs[0].data();
-  return { slug, ...docData } as Recipe;
+  // 2) Fallback to simple equality query on slug field
+  try {
+    const slugQuery = query(recipesCollection, where("slug", "==", slug), fbLimit(1));
+    const snapshot = await getDocs(slugQuery);
+    if (snapshot.empty) return null;
+    const docData = snapshot.docs[0].data();
+    return { slug, ...docData } as Recipe;
+  } catch (err) {
+    console.error("getBySlug failed on slug query:", err);
+    throw err;
+  }
 }
+
+// export async function getByOwnerSlug(userId: string, slug: string): Promise<Recipe | null> {
+//   const db = getFirestore();
+//   const recipesCollection = collection(db, `draft-recipes`);
+//   const slugQuery = query(recipesCollection, where("slug", "==", slug));
+//   const snapshot = await getDocs(slugQuery);
+//   if (snapshot.empty) {
+//     return null;
+//   }
+
+//   const docData = snapshot.docs[0].data();
+//   return { slug, ...docData } as Recipe;
+// }
 
 export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Recipe[]> {
   if (!isPromoted) return [];
