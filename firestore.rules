@@ -28,7 +28,7 @@ service cloud.firestore {
       allow read: if true;
 
       // create: authenticated user and createdBy must equal their uid
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+      allow create: if request.auth != null;
 
       // update/delete: only the original creator or admin may modify
       allow update, delete: if request.auth != null && (
