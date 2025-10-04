@@ -138,8 +138,6 @@ const Chat = () => {
         sendMessage();
       }
 
-      console.log("Available models:", models);
-
       // if the list does not contain the current model, change the current model
       if ((models || []).findIndex((m: Model) => m.id === currentModel) === -1) {
         const firstModel = Object.values(supportedModels).flatMap((group: any) => group.models)[0];
