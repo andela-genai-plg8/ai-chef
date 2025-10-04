@@ -1,6 +1,5 @@
 import API, { OpenAI } from "openai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
-// import { Chat } from "openai/resources/index";
 import { Recipe } from "shared-types";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
