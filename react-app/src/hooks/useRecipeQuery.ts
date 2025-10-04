@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes, getRecipesPage, getOwnerRecipesPage, getOwnRecipeBySlug } from '../api/recipes';
+import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged } from '../api/recipes';
 import { getDictionary } from '../api/dictionary';
 import { getModels } from '@/api/models';
 
@@ -52,36 +52,37 @@ export function useRecipeQuery({ ingredients }: RecipeQueryParams) {
  *  - startAfterId?: string - optional Firestore document id used as cursor (startAfter)
  */
 export function useAllRecipesQuery(pageSize?: number, startAfterId?: string, userId?: string) {
+
   // If pageSize is provided, use cursor-based pagination
   if (pageSize && pageSize > 0) {
     return useQuery({
       queryKey: userId ? recipeKeys.byOwner(userId, pageSize, startAfterId) : recipeKeys.allPaged(pageSize, startAfterId),
-      queryFn: () => userId ? getOwnerRecipesPage(userId, pageSize, startAfterId) : getRecipesPage(pageSize, startAfterId),
+      queryFn: () => userId ? getByOwnerPaged(userId, pageSize, startAfterId) : getPaged(pageSize, startAfterId),
     });
   }
 
   // otherwise return all recipes
   return useQuery({
     queryKey: recipeKeys.all,
-    queryFn: getAllRecipes,
+    queryFn: getAll,
   });
 }
 
 export function useRecipeBySlugQuery(slug: string) {
   return useQuery({
     queryKey: recipeKeys.bySlug(slug),
-    queryFn: () => getRecipeBySlug(slug),
+    queryFn: () => getBySlug(slug),
     enabled: !!slug,
   });
 }
 
-export function useOwnRecipeBySlugQuery(userId: string, slug: string) {
-  return useQuery({
-    queryKey: recipeKeys.byOwnerSlug(userId, slug),
-    queryFn: () => getOwnRecipeBySlug(userId, slug),
-    enabled: !!slug,
-  });
-}
+// export function useOwnRecipeBySlugQuery(userId: string, slug: string) {
+//   return useQuery({
+//     queryKey: recipeKeys.byOwnerSlug(userId, slug),
+//     queryFn: () => getByOwnerSlug(userId, slug),
+//     enabled: !!slug,
+//   });
+// }
 
 export function usePromotedRecipesQuery(isPromoted: boolean = true) {
   return useQuery({
