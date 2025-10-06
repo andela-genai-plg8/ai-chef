@@ -1,7 +1,7 @@
 import axios from "./axiosClient";
 // import { addDoc,  } from "firebase/firestore";
 
-import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId } from "firebase/firestore";
+import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId, updateDoc } from "firebase/firestore";
 import { Recipe } from "shared-types";
 
 interface FindRecipeParams {
@@ -129,7 +129,7 @@ export async function getBySlug(slug: string): Promise<Recipe | null> {
     const docSnap = await getDoc(doc(db, "recipes", slug));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      return { slug: docSnap.id, ...data } as Recipe;
+      return { ___id: slug, slug: docSnap.id, ...data } as unknown as Recipe;
     }
   } catch (err) {
     // If getDoc failed due to permissions or other reasons, log and continue
@@ -142,7 +142,7 @@ export async function getBySlug(slug: string): Promise<Recipe | null> {
     const snapshot = await getDocs(slugQuery);
     if (snapshot.empty) return null;
     const docData = snapshot.docs[0].data();
-    return { slug, ...docData } as Recipe;
+    return { ___id: snapshot.docs[0].id, slug, ...docData } as unknown as Recipe;
   } catch (err) {
     console.error("getBySlug failed on slug query:", err);
     throw err;
@@ -173,4 +173,31 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
     const data = doc.data();
     return { slug: data.slug, ...data } as Recipe;
   });
+}
+
+/**
+ * Update a recipe document by id with the provided recipe payload.
+ * The function strips the id field from the payload (if present) and updates
+ * the Firestore document at `recipes/{id}`.
+ */
+export async function updateRecipe(id: string, recipe: Recipe): Promise<Recipe> {
+  const db = getFirestore();
+  const recipeRef = doc(db, 'recipes', id);
+  // Avoid writing the id field into the document body
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: ___id, ...payload } = recipe as any;
+
+  // Firestore rejects undefined values. Remove any keys that are undefined
+  // but preserve null (explicitly clearing a field).
+  const cleanPayload: Record<string, any> = Object.fromEntries(
+    Object.entries(payload).filter(([, v]) => v !== undefined)
+  );
+
+  try {
+    await updateDoc(recipeRef, cleanPayload as any);
+    return { ...recipe, id } as Recipe;
+  } catch (err) {
+    console.error('Failed to update recipe', id, err);
+    throw err;
+  }
 }
