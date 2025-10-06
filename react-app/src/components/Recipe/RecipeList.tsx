@@ -21,12 +21,13 @@ export type RecipeListProps = {
   className?: string;
   recipeList?: Recipe[];
   limit?: number;
+  personal?: boolean;
   loading?: boolean;
   noMoreItems?: boolean;
   onGetMoreRecipes?: () => void;
 }
 
-const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, onGetMoreRecipes, loading, noMoreItems }) => {
+const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, limit, className, onGetMoreRecipes, loading, noMoreItems }) => {
   const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
   const items = ((recipeList === undefined ? promotedRecipes : recipeList) || []);
   const listToRender = items.filter((_, index) => limit === undefined || index < limit);
@@ -86,7 +87,7 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
 
   const navigate = useNavigate();
   return (
-  <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
+    <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
       {isPromotedLoading && !recipeList ? (
         <div>Loading promoted recipes...</div>
       ) : (
@@ -99,21 +100,24 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
                   className={styles.RecipeCard}
                   key={`${recipe.id}-${recipe.slug}-${idx}`}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/recipe/${recipe.slug}`)}
+                  onClick={() => {
+                    if (personal) navigate(`/my/recipe/${recipe.id}`)
+                    else navigate(`/recipe/${recipe.slug}`)
+                  }}
                 >
                   <RecipeCard recipe={recipe} />
                 </div>
               );
             })
-            }
-            {
-              (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading && listToRender.length > 0) &&
-              <div className={styles.LoadMore} ref={loadMoreRef}><span>Load more...</span></div>
-            }
-            {
-              (typeof onGetMoreRecipes === 'function' && loading) &&
-              <div className={styles.LoadMore}><span>Loading...</span></div>
-            }
+          }
+          {
+            (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading && listToRender.length > 0) &&
+            <div className={styles.LoadMore} ref={loadMoreRef}><span>Load more...</span></div>
+          }
+          {
+            (typeof onGetMoreRecipes === 'function' && loading) &&
+            <div className={styles.LoadMore}><span>Loading...</span></div>
+          }
         </Fragment>
       )}
     </div>
