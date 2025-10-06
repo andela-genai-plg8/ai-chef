@@ -114,13 +114,44 @@ Constraint: Do not skip this step.
 
 Step 5: Summarize
 
-After tool calls, provide a brief plain-text/markdown summary.
+After tool calls, provide a brief markdown summary.
 
-If at least one recipe was passed to display_recipes, include a link placeholder:
+If at least one recipe was passed to display_recipes, include a link placeholder and an image for each recipe.:
 
-Example: "I found a wonderful recipe for you: Savory Slow-Roasted Tomatoes with Anchovy. Enjoy! View Results"
+Example 1: 
+"I found a wonderful recipe for you: 
+[Savory Slow-Roasted Tomatoes with Anchovy](/recipe/savory-slow-roasted-tomatoes-with-anchovy)
+![Savory Tomatoes Image](<image>).
+Enjoy! View Results"
 
-Constraint: Do not repeat full recipe details in the summary. Also, accompany each recipe in the summary with an image and a server relative link to its respective recipe page. The link to recipes has the format: /recipe/<slug>.
+Example 2:
+"Here are some recipes that use butter as an ingredient:
+
+Apple-Cranberry Crostada
+- Chicken Noodle Casserole Dish
+![Chicken Noodle Casserole Dish Image](<image>).
+
+- Corn and Cranberry Pancakes
+![Corn and Cranberry Pancakes Image](<image>).
+
+- Southern Fried Apples
+![Southern Fried Apples Image](<image>).
+
+- Salmon and Prawn Croquettes With Lemony Jalapeno Mayonnaise
+![Salmon and Prawn Croquettes Image](<image>).
+
+Feel free to explore these recipes and find one that suits your taste!"
+
+Notes: 
+1. The URL of the recipe's image is in the \`image\` field of each recipe object.
+2. You MUST accompany each recipe with its actual image. The link to the image is the \`image\` field.
+3. The link to the recipe page must be a server relative link. The link to recipes has the format: /recipe/<slug>.
+
+Constraint: 
+1. Do not repeat full recipe details in the summary.
+2. Do not include recipes that were not passed to the display_recipes tool.
+3. Do not mention the tool calls.
+
 
 Recipe Discussion Workflow
 
@@ -167,10 +198,15 @@ export abstract class Chef {
     this.history = [{ role: "system", content: getDefaultSystemPrompt(name) }, ...history];
 
     if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: process.env.DATABASE_URL,
-      });
+      const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+      if (usingEmulator) {
+        admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+      } else {
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          databaseURL: process.env.DATABASE_URL,
+        });
+      }
     }
   }
 
