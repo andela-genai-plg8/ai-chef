@@ -1,6 +1,7 @@
 // Use compiled Bootstrap CSS to avoid compiling the Bootstrap SCSS (which
 // emits deprecation warnings). Keep styling here CSS-only so it doesn't
 // rely on Bootstrap SCSS variables, mixins or placeholders.
+@use "@/styles/mixins" as m;
 @import "bootstrap/dist/css/bootstrap.min.css";
 
 /* CSS runtime variables for theming */
@@ -13,40 +14,8 @@
   --bs-light: #f8f9fa;
 }
 
-/* Provide general media-breakpoint mixins (up/down) for common Bootstrap
-   breakpoints so component SCSS using @include media-breakpoint-*(...) will
-   compile without importing Bootstrap SCSS. */
-@mixin media-breakpoint-down($break) {
-  @if $break == sm {
-    @media (max-width: 576px) { @content; }
-  } @else if $break == md {
-    @media (max-width: 768px) { @content; }
-  } @else if $break == lg {
-    @media (max-width: 992px) { @content; }
-  } @else if $break == xl {
-    @media (max-width: 1200px) { @content; }
-  } @else if $break == xxl {
-    @media (max-width: 1400px) { @content; }
-  } @else {
-    @content;
-  }
-}
-
-@mixin media-breakpoint-up($break) {
-  @if $break == sm {
-    @media (min-width: 576px) { @content; }
-  } @else if $break == md {
-    @media (min-width: 768px) { @content; }
-  } @else if $break == lg {
-    @media (min-width: 992px) { @content; }
-  } @else if $break == xl {
-    @media (min-width: 1200px) { @content; }
-  } @else if $break == xxl {
-    @media (min-width: 1400px) { @content; }
-  } @else {
-    @content;
-  }
-}
+/* Use the small mixins module for breakpoint helpers. Components should
+  @use this module as `m` to call mixins like `@include m.media-breakpoint-up(...)`. */
 
 /* Primary button override using runtime variables. The !important rules
    make sure we override the compiled Bootstrap rules when needed. */
@@ -237,3 +206,26 @@
 .btn-primary { --bs-keep: 1; }
 .btn-secondary { --bs-keep: 1; }
 .multiline-truncate { --bs-keep: 1; }
+
+.PrimaryButton {
+  @extend .btn;
+  @extend .btn-primary;
+  @extend .shadow;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 30px !important;
+  position: relative;
+  z-index: 10;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
