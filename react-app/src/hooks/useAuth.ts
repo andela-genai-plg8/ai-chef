@@ -5,7 +5,6 @@ import { useAppState } from "@/hooks/useAppState";
 
 export function useAuth(currentRoute?: string) {
   const { previousPath, user, setPreviousPath, setUser, setAuthToken } = useAppState();
-  console.log("useAuth called with route:", currentRoute, "previousPath:", previousPath);
 
   if (currentRoute !== previousPath && currentRoute != "/login" && currentRoute !== undefined) {
     setPreviousPath(currentRoute);

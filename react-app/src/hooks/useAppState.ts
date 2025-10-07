@@ -27,7 +27,6 @@ export const useAppState = create<AppState>(
     loadWords: async () => {
       const words = await getDictionary();
       if (words) {
-        console.log("Words", words)
         set({ words });
       }
     },
