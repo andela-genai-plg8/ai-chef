@@ -26,7 +26,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 
           // If it's an internal link (relative URL), use React Router <Link>
           if (href.startsWith("/")) {
-            return <Link to={href}>{props.children}</Link>;
+            return <Link className={styles.Link} to={href}>{props.children}</Link>;
           }
 
           // Otherwise, fall back to normal <a>
@@ -276,15 +276,7 @@ const Chat = () => {
           <FaTimes />
         </button>
       </div>
-      {/* <div className={styles.ModelDropdown}>
-        <select
-          className={styles.FormSelect}
-          value={currentModel}
-          onChange={(e) => setCurrentModel(e.target.value)}
-        >
-          {renderModelDropdown}
-        </select>
-      </div> */}
+      
       <div
         className={styles.MessageContainer}
         ref={messageContainerRef}

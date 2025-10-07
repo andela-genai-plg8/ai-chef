@@ -79,10 +79,16 @@
       img {
         @extend .img-fluid;
         @extend .rounded;
-        @extend .py-2;
         @extend .shadow;
         max-width: calc(100% - 10px);
         height: auto;
+      }
+
+      .Link {
+        @extend .text-white;
+        word-break: break-word; // ensure long URLs break
+        font-weight: bolder;
+        text-decoration: none
       }
 
       &.Assistant {
@@ -101,10 +107,6 @@
           transform: translateY(1px);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-
-        // & > div {
-        //   al
-        // }
       }
 
       &.User {

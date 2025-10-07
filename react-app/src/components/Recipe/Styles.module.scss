@@ -238,8 +238,14 @@
     @include m.media-breakpoint-down(sm) {
       flex-direction: column;
       flex-flow: column-reverse;
-      overflow-x: hidden;
+      overflow: visible;
       max-width: 100%;
+
+      .CenterColumn {
+        min-width: 100%;
+        max-width: 100%;
+        width: 100%;
+      }
     }
 
     // .LeftColumn {
@@ -303,13 +309,13 @@
       // border: 1px solid red;
 
       .ImageGallery {
-        @extend .shadow;
+        // @extend .shadow;
         width: 100%;
         /* let the image determine the height so aspect ratio is preserved */
         display: block;
         position: relative;
-        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
-        border-radius: 32px;
+        // background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
+        // border-radius: 32px;
         min-height: 300px;
 
         /* react-image-gallery internals: make slides flow and images responsive */
