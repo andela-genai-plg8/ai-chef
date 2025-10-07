@@ -117,14 +117,16 @@ export function useUpdateRecipeMutation() {
 
   return useMutation({
     mutationFn: async ({ id, recipe }: { id: string; recipe: Recipe }) => {
-      return updateRecipe(id, recipe);
+      return updateRecipe(id, { ...recipe, updatedAt: new Date() });
     },
     onSuccess: (data) => {
       // invalidate general recipe caches so updated recipe is refetched where needed
       qc.invalidateQueries({ queryKey: recipeKeys.all });
       qc.invalidateQueries({ queryKey: recipeKeys.promoted });
       // also invalidate by-slug entry if slug is present
-      if (data?.slug) qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.slug) });
+      if (data.id){
+        console.log('Invalidating bySlug for', data.id);
+        qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });}
     },
   });
 }

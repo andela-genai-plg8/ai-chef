@@ -3,6 +3,49 @@ import axios from "./axiosClient";
 
 import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId, updateDoc } from "firebase/firestore";
 import { Recipe } from "shared-types";
+// src/utils/timestamps.ts
+// Optionally import admin types if you also need Admin SDK helpers.
+// import admin from 'firebase-admin';
+
+/**
+ * Type-guard for Firestore Timestamp-like objects (client or admin).
+ */
+export function isFirestoreTimestampLike(v: unknown): v is { seconds: number; nanoseconds: number; toDate: () => Date } {
+  return !!v && typeof v === 'object'
+    && 'seconds' in (v as any)
+    && 'nanoseconds' in (v as any)
+    && typeof (v as any).toDate === 'function';
+}
+
+/**
+ * Convert a mixed value to a JS Date (null-safe).
+ * Accepts:
+ * - Date (returned as-is)
+ * - number (treated as milliseconds since epoch)
+ * - ISO string (new Date(string))
+ * - Firestore Timestamp-like (uses .toDate())
+ * - null/undefined -> null
+ */
+export function toDate(value: Date | number | string | any | null | undefined): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value;
+  if (isFirestoreTimestampLike(value)) return value.toDate();
+  if (typeof value === 'number') return new Date(value);
+  if (typeof value === 'string') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  // fallback: if object exposes toDate (e.g. some custom timestamp)
+  if (value && typeof value.toDate === 'function') {
+    try {
+      const d = value.toDate();
+      return d instanceof Date ? d : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 interface FindRecipeParams {
   ingredients: string[];
@@ -109,7 +152,7 @@ export async function getByOwnerPaged(ownerId: string, pageSize: number = 10, st
   try {
     recipes = snapshot.docs.map((d) => {
       const data = d.data();
-      return { slug: data.slug, ...data, id: d.id } as Recipe;
+      return { slug: data.slug, ...data, id: d.id, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as Recipe;
     });
   } catch (e) {
     console.error("Error fetching owner's recipes", e);
@@ -129,7 +172,7 @@ export async function getBySlug(slug: string): Promise<Recipe | null> {
     const docSnap = await getDoc(doc(db, "recipes", slug));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      return { ___id: slug, slug: docSnap.id, ...data } as unknown as Recipe;
+      return { ___id: slug, slug: docSnap.id, ...data, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as unknown as Recipe;
     }
   } catch (err) {
     // If getDoc failed due to permissions or other reasons, log and continue
@@ -142,7 +185,7 @@ export async function getBySlug(slug: string): Promise<Recipe | null> {
     const snapshot = await getDocs(slugQuery);
     if (snapshot.empty) return null;
     const docData = snapshot.docs[0].data();
-    return { ___id: snapshot.docs[0].id, slug, ...docData } as unknown as Recipe;
+    return { ___id: snapshot.docs[0].id, slug, ...docData, updatedAt: toDate(docData.updatedAt), createdAt: toDate(docData.createdAt) } as unknown as Recipe;
   } catch (err) {
     console.error("getBySlug failed on slug query:", err);
     throw err;
@@ -171,7 +214,7 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
   const snapshot = await getDocs(promotedQuery);
   return snapshot.docs.slice(0, 5).map((doc) => {
     const data = doc.data();
-    return { slug: data.slug, ...data } as Recipe;
+    return { slug: data.slug, ...data, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as Recipe;
   });
 }
 
