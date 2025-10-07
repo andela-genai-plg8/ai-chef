@@ -62,6 +62,8 @@
     border-radius: 8px;
     padding: 16px;
     background-color: #f8f9fa;
+    position: relative;
+    z-index: 1000;
 
     .Message {
       @extend .text-start;

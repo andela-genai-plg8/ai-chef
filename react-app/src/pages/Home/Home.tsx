@@ -14,7 +14,7 @@ function Home() {
       {/* Welcome Message */}
       <div className={styles.WelcomeMessage}>
         <h1>Welcome to Chef Andel!</h1>
-        <p>Your ultimate destination for discovering mouthwatering recipes and culinary inspiration. Let’s cook something amazing today!</p>
+        <p>Your ultimate destination for discovering mouthwatering recipes and culinary inspiration. Let's cook something amazing today!</p>
       </div>
 
       {/* Featured Recipes Section */}
