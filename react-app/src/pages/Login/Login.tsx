@@ -13,7 +13,7 @@ const providerGithub = new GithubAuthProvider();
 export default function Login() {
   const navigate = useNavigate();
   const { previousPath } = useAuth();
-  const isMobile = useMediaQuery({ maxWidth: 390 });
+  const isMobile = useMediaQuery({ maxWidth: 1100 });
   
 
   useEffect(() => {
