@@ -12,6 +12,33 @@
   min-width: 70px;
   max-width: 70px;
   height: 100vh;
+  /* animate width changes when toggling .Closed */
+  transition: width 240ms ease, min-width 240ms ease, max-width 240ms ease;
+  will-change: width, max-width;
+
+  .HamburgerMenu {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ffffff;
+    z-index: 1000;
+    left: 30px;
+  }
+
+  &.Closed {
+    width: 0px;
+    min-width: 0px;
+    max-width: 0px;
+    overflow: visible;
+
+    .HamburgerMenu {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #fd7e14;
+      z-index: 1000;
+      position: relative;
+      left: 30px;
+    }
+  }
 
   & > ul {
     @extend .nav;

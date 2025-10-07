@@ -585,3 +585,12 @@
 .Clickable {
   cursor: pointer;
 }
+
+.MainContent {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 100vh;
+}

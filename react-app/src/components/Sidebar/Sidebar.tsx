@@ -8,6 +8,8 @@ import { BsFileEarmarkCheck } from "react-icons/bs";
 import { GiKnifeFork } from "react-icons/gi";
 import { LuLogOut, LuLogIn } from "react-icons/lu";
 import { useAuth } from "@/hooks/useAuth";
+import { useMediaQuery } from 'react-responsive';
+import { GiHamburgerMenu } from "react-icons/gi";
 
 export type SidebarProps = {
   className?: string;
@@ -18,55 +20,66 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "", style = {} }) => {
   const location = useLocation();
   const { user, signOut, setPreviousPath } = useAuth(location.pathname);
   const navigate = useNavigate();
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const [isMenuOpen, setIsMenuOpen] = useState(!isMobile);
 
   return (
-    <nav className={classNames(styles.Sidebar, className)} style={{ ...style }}>
-      <ul>
-        <li>
-          <Link to="/" className={styles.Link} aria-current="page">
-            <FaHome />
-          </Link>
-        </li>
-        <li>
-          <Link to="/recipes" className={styles.Link} aria-current="page">
-            <GiKnifeFork />
-          </Link>
-        </li>
-        <li>
-          <Link to="/recipes/new" className={styles.Link} aria-current="page" title="Add recipe">
-            <BsFileEarmarkCheck />
-          </Link>
-        </li>
-        <li>
-          <Link to="/settings" className={styles.Link}>
-            <FaGear />
-          </Link>
-        </li>
-        {
-          user && <li className={styles.Logout}>
-            <a href="/" onClick={async (e) => {
-              e.preventDefault();
-              await signOut();
-              // show a modal informing the user they have signed out?
-              return navigate("/");
-            }} className={classNames(styles.Link)} title="Log out">
-              <LuLogOut />
-            </a>
-          </li>
-        }
+    <nav className={classNames(styles.Sidebar, className, { [styles.Closed]: !isMenuOpen })} style={{ ...style }}>
+      {
+        isMobile && <div className={styles.HamburgerMenu} onClick={() => setIsMenuOpen(!isMenuOpen)} title="Menu">
+          <GiHamburgerMenu />
+        </div>
+      }
+      {
+        (isMenuOpen || !isMobile) && (
+          <ul>
+            <li>
+              <Link to="/" className={styles.Link} aria-current="page">
+                <FaHome />
+              </Link>
+            </li>
+            <li>
+              <Link to="/recipes" className={styles.Link} aria-current="page">
+                <GiKnifeFork />
+              </Link>
+            </li>
+            <li>
+              <Link to="/recipes/new" className={styles.Link} aria-current="page" title="Add recipe">
+                <BsFileEarmarkCheck />
+              </Link>
+            </li>
+            <li>
+              <Link to="/settings" className={styles.Link}>
+                <FaGear />
+              </Link>
+            </li>
+            {
+              user && <li className={styles.Logout}>
+                <a href="/" onClick={async (e) => {
+                  e.preventDefault();
+                  await signOut();
+                  // show a modal informing the user they have signed out?
+                  return navigate("/");
+                }} className={classNames(styles.Link)} title="Log out">
+                  <LuLogOut />
+                </a>
+              </li>
+            }
 
-        {
-          !user && <li className={styles.Logout}>
-            <a href="#" title="Log in" onClick={(e) => {
-              e.preventDefault();
-              setPreviousPath(location.pathname);
-              return navigate("/login");
-            }} className={classNames(styles.Link)}>
-              <LuLogIn />
-            </a>
-          </li>
-        }
-      </ul>
+            {
+              !user && <li className={styles.Logout}>
+                <a href="#" title="Log in" onClick={(e) => {
+                  e.preventDefault();
+                  setPreviousPath(location.pathname);
+                  return navigate("/login");
+                }} className={classNames(styles.Link)}>
+                  <LuLogIn />
+                </a>
+              </li>
+            }
+          </ul>
+        )
+      }
     </nav>
   );
 };
