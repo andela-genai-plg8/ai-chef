@@ -1,0 +1,34 @@
+// Small shared Sass mixins for responsive breakpoints used by components.
+// This file is intentionally tiny so components can @use it directly.
+
+@mixin media-breakpoint-down($break) {
+  @if $break == sm {
+    @media (max-width: 576px) { @content; }
+  } @else if $break == md {
+    @media (max-width: 768px) { @content; }
+  } @else if $break == lg {
+    @media (max-width: 992px) { @content; }
+  } @else if $break == xl {
+    @media (max-width: 1200px) { @content; }
+  } @else if $break == xxl {
+    @media (max-width: 1400px) { @content; }
+  } @else {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-up($break) {
+  @if $break == sm {
+    @media (min-width: 576px) { @content; }
+  } @else if $break == md {
+    @media (min-width: 768px) { @content; }
+  } @else if $break == lg {
+    @media (min-width: 992px) { @content; }
+  } @else if $break == xl {
+    @media (min-width: 1200px) { @content; }
+  } @else if $break == xxl {
+    @media (min-width: 1400px) { @content; }
+  } @else {
+    @content;
+  }
+}

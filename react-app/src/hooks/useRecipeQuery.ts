@@ -1,6 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAllRecipes, getRecipeBySlug, getPromotedRecipes, getRecipesPage, getOwnerRecipesPage, getOwnRecipeBySlug } from '../api/recipes';
+import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe } from '../api/recipes';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getApp, getApps } from 'firebase/app';
+import '../firebase';
 import { getDictionary } from '../api/dictionary';
 import { getModels } from '@/api/models';
 
@@ -52,36 +55,37 @@ export function useRecipeQuery({ ingredients }: RecipeQueryParams) {
  *  - startAfterId?: string - optional Firestore document id used as cursor (startAfter)
  */
 export function useAllRecipesQuery(pageSize?: number, startAfterId?: string, userId?: string) {
+
   // If pageSize is provided, use cursor-based pagination
   if (pageSize && pageSize > 0) {
     return useQuery({
       queryKey: userId ? recipeKeys.byOwner(userId, pageSize, startAfterId) : recipeKeys.allPaged(pageSize, startAfterId),
-      queryFn: () => userId ? getOwnerRecipesPage(userId, pageSize, startAfterId) : getRecipesPage(pageSize, startAfterId),
+      queryFn: () => userId ? getByOwnerPaged(userId, pageSize, startAfterId) : getPaged(pageSize, startAfterId),
     });
   }
 
   // otherwise return all recipes
   return useQuery({
     queryKey: recipeKeys.all,
-    queryFn: getAllRecipes,
+    queryFn: getAll,
   });
 }
 
 export function useRecipeBySlugQuery(slug: string) {
   return useQuery({
     queryKey: recipeKeys.bySlug(slug),
-    queryFn: () => getRecipeBySlug(slug),
+    queryFn: () => getBySlug(slug),
     enabled: !!slug,
   });
 }
 
-export function useOwnRecipeBySlugQuery(userId: string, slug: string) {
-  return useQuery({
-    queryKey: recipeKeys.byOwnerSlug(userId, slug),
-    queryFn: () => getOwnRecipeBySlug(userId, slug),
-    enabled: !!slug,
-  });
-}
+// export function useOwnRecipeBySlugQuery(userId: string, slug: string) {
+//   return useQuery({
+//     queryKey: recipeKeys.byOwnerSlug(userId, slug),
+//     queryFn: () => getByOwnerSlug(userId, slug),
+//     enabled: !!slug,
+//   });
+// }
 
 export function usePromotedRecipesQuery(isPromoted: boolean = true) {
   return useQuery({
@@ -102,4 +106,97 @@ export function useDictionary() {
     queryKey: dictionaryKeys.all,
     queryFn: () => getDictionary(),
   });
+}
+
+/**
+ * Mutation hook to update a recipe using the `updateRecipe` API helper.
+ * On success it invalidates relevant recipe query caches so UI shows fresh data.
+ */
+export function useUpdateRecipeMutation() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, recipe }: { id: string; recipe: Recipe }) => {
+      return updateRecipe(id, recipe);
+    },
+    onSuccess: (data) => {
+      // invalidate general recipe caches so updated recipe is refetched where needed
+      qc.invalidateQueries({ queryKey: recipeKeys.all });
+      qc.invalidateQueries({ queryKey: recipeKeys.promoted });
+      // also invalidate by-slug entry if slug is present
+      if (data?.slug) qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.slug) });
+    },
+  });
+}
+
+/**
+ * Uploads a File to Firebase Storage under a recipes/ prefix and returns the download URL.
+ * Uses the recipe object to construct a sensible path. This helper is intentionally
+ * side-effect free with respect to Firestore; it only uploads the file and returns the URL.
+ */
+export async function uploadRecipeImage(file: File, recipe: Recipe): Promise<string> {
+  if (!file || !file.name) throw new TypeError('Invalid file provided to uploadRecipeImage');
+  if (!getApps().length) throw new Error('Firebase app is not initialized');
+  const app = getApp();
+  // ensure storageBucket is configured on the Firebase app
+  const appOptions: any = (app as any).options || {};
+  if (!appOptions.storageBucket) {
+    console.error('Firebase app is missing storageBucket configuration:', appOptions);
+    throw new Error('Firebase Storage is not configured (missing storageBucket in Firebase config)');
+  }
+  const storage = getStorage(app);
+  const safeName = (recipe?.id || recipe?.slug || recipe?.name || 'recipe').toString().replace(/\s+/g, '_');
+  const path = `recipes/${safeName}_${Date.now()}_${String(file.name)}`;
+  let sRef;
+  try {
+    sRef = storageRef(storage, path);
+  } catch (err) {
+    console.error('Failed to create storage ref', { path, fileName: file.name, appOptions, err });
+    throw new Error('Unable to create Firebase Storage reference. See console for details.');
+  }
+  const uploadTask = uploadBytesResumable(sRef, file);
+
+  await new Promise<void>((resolve, reject) => {
+    uploadTask.on('state_changed', () => {
+      // could report progress here if needed
+    }, (err) => reject(err), () => resolve());
+  });
+
+  const url = await getDownloadURL(sRef);
+  return url;
+}
+
+/**
+ * Delete a storage object given a Firebase download URL or a gs:// URL.
+ * If the URL cannot be parsed into a storage path, this will attempt best-effort deletion and
+ * will otherwise resolve without throwing (but will log warnings).
+ */
+export async function deleteRecipeImageByUrl(url: string): Promise<void> {
+  if (!url) return;
+  if (!getApps().length) {
+    console.warn('Firebase app is not initialized; cannot delete storage object for url', url);
+    return;
+  }
+  const storage = getStorage(getApp());
+  try {
+    let refToDelete;
+    const idx = url.indexOf('/o/');
+    if (idx !== -1) {
+      const after = url.substring(idx + 3);
+      const pathEncoded = after.split('?')[0];
+      const path = decodeURIComponent(pathEncoded);
+      refToDelete = storageRef(storage, path);
+    } else if (url.startsWith('gs://')) {
+      refToDelete = storageRef(storage, url);
+    }
+
+    if (refToDelete) {
+      await deleteObject(refToDelete);
+    } else {
+      console.warn('Could not determine storage reference for URL:', url);
+    }
+  } catch (err) {
+    console.warn('Failed to delete storage object for url', url, err);
+    // do not rethrow — deletion failure should not block DB updates in the UI flow
+  }
 }

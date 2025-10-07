@@ -18,32 +18,14 @@
     background-color: #ffffff;
 
     .HeadingContainer {
-      display: grid;
-      grid-template-areas: "stack";
+      // display: grid;
+      // grid-template-areas: "stack";
+      display: flex;
+      flex-direction: row;
+      align-items: center;
       height: 100px;
       width: 100%;
       @extend .p-2;
-
-      .Links {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        grid-area: stack;
-        z-index: 1;
-        @extend .mb-2;
-        .BackLink {
-          @extend .btn;
-          @extend .me-2;
-
-          &:not(.Active) {
-            @extend .btn-secondary;
-          }
-
-          &.Active {
-            @extend .btn-primary;
-          }
-        }
-      }
 
       .Title {
         h1 {
@@ -67,6 +49,7 @@
       overflow-x: visible;
     }
   }
+
   .RecipeList {
     @extend .px-3;
     @extend .py-3;

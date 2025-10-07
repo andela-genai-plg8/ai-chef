@@ -1,4 +1,5 @@
-@import "@/index.module.scss";
+@use "@/index.module.scss" as *;
+@use "@/styles/mixins" as m;
 
 .RecipeCard {
   @extend .shadow;
@@ -84,26 +85,24 @@
   gap: 1rem;
   grid-template-columns: repeat(1, 1fr);
 
-  @include media-breakpoint-up(xl) {
+  @include m.media-breakpoint-up(xl) {
     // lg
     grid-template-columns: repeat(6, 1fr);
   }
 
-  @include media-breakpoint-up(lg) {
+  @include m.media-breakpoint-up(lg) {
     // md
     grid-template-columns: repeat(5, 1fr);
   }
 
-  @include media-breakpoint-up(md) {
+  @include m.media-breakpoint-up(md) {
     // sm
     grid-template-columns: repeat(5, 1fr);
   }
 
   .RecipeCard {
     cursor: pointer;
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 
     &:hover {
       transform: translateY(-4px);
@@ -200,53 +199,53 @@
     align-items: flex-start;
     margin-bottom: 2rem;
 
-    @include media-breakpoint-down(sm) {
+    @include m.media-breakpoint-down(sm) {
       flex-direction: column;
       flex-flow: column-reverse;
       overflow-x: hidden;
       max-width: 100%;
     }
 
-    .LeftColumn {
-      flex: 2;
-      min-width: 280px;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
+    // .LeftColumn {
+    //   flex: 2;
+    //   min-width: 280px;
+    //   max-width: 480px;
+    //   display: flex;
+    //   flex-direction: column;
+    //   gap: 1.2rem;
 
-      .Section {
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(0, 0, 0, 0.05);
+    //   .Section {
+    //     background: #fff;
+    //     border-radius: 16px;
+    //     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    //     padding: 2rem;
+    //     margin-bottom: 2rem;
+    //     border: 1px solid rgba(0, 0, 0, 0.05);
 
-        &.Ingredients {
-          background-color: inherit;
-        }
+    //     &.Ingredients {
+    //       background-color: inherit;
+    //     }
 
-        h2 {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #2c3e50;
-          margin-bottom: 1.5rem;
-          position: relative;
+    //     h2 {
+    //       font-size: 1.5rem;
+    //       font-weight: 700;
+    //       color: #2c3e50;
+    //       margin-bottom: 1.5rem;
+    //       position: relative;
 
-          &::after {
-            content: "";
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 40px;
-            height: 3px;
-            background: linear-gradient(to right, #fd7e14, #e74c3c);
-            border-radius: 2px;
-          }
-        }
-      }
-    }
+    //       &::after {
+    //         content: "";
+    //         position: absolute;
+    //         bottom: -8px;
+    //         left: 0;
+    //         width: 40px;
+    //         height: 3px;
+    //         background: linear-gradient(to right, #fd7e14, #e74c3c);
+    //         border-radius: 2px;
+    //       }
+    //     }
+    //   }
+    // }
 
     .CenterColumn {
       flex: 0.5;
@@ -259,18 +258,50 @@
 
     .RightColumn {
       flex: 2;
+      min-height: 300px;
       min-width: 340px;
       max-width: 50vw;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-end;
+      // border: 1px solid red;
 
       .ImageGallery {
-        flex-direction: column;
-        align-items: center;
+        @extend .shadow;
+        width: 100%;
+        /* let the image determine the height so aspect ratio is preserved */
+        display: block;
+        position: relative;
         background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
         border-radius: 32px;
-        width: 100%;
+        min-height: 300px;
+
+        /* react-image-gallery internals: make slides flow and images responsive */
+        .image-gallery-slide,
+        .image-gallery-image,
+        img.image-gallery-image {
+          width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          object-fit: cover;
+        }
+
+        /* wrapper should expand to the image height */
+        .image-gallery-image {
+          max-width: 100%;
+        }
+
+        /* center Add button inside the gallery */
+        .RemoveButton,
+        .AddButton {
+          position: absolute;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          align-self: center;
+          margin: 0;
+          z-index: 20;
+        }
       }
     }
   }
@@ -298,9 +329,7 @@
     object-fit: cover;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 2px solid white;
     cursor: pointer;
 
@@ -353,7 +382,7 @@
       border: none;
     }
 
-    @include media-breakpoint-down(sm) {
+    @include m.media-breakpoint-down(sm) {
       display: flex;
       flex-direction: column;
       background: #efefef;
@@ -394,9 +423,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid rgba(0, 0, 0, 0.05);
 
     &:hover {
@@ -419,7 +446,7 @@
       gap: 1rem;
       padding: 0px;
 
-      @include media-breakpoint-down(sm) {
+      @include m.media-breakpoint-down(sm) {
         display: flex;
         flex-direction: column;
       }
@@ -439,7 +466,7 @@
           text-transform: uppercase;
         }
 
-        @include media-breakpoint-down(sm) {
+        @include m.media-breakpoint-down(sm) {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
@@ -468,7 +495,7 @@
 
     // on bootstrap smallscreens
     // use the flex column display
-    @include media-breakpoint-down(sm) {
+    @include m.media-breakpoint-down(sm) {
       display: flex;
       flex-direction: column;
       padding: 0 5px;

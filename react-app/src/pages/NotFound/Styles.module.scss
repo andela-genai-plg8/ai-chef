@@ -1,6 +1,6 @@
 @import "@/index.module.scss";
 
-.Home {
+.NotFound {
   width: 100%;
   height: 100vh;
   min-height: 100vh;
@@ -8,6 +8,8 @@
   overflow-y: scroll;
   padding: 0.5rem 1rem;
   position: relative;
+  display: grid;
+  place-items: center; /* Center content both vertically and horizontally */
 
   > .Background {
     position: absolute;
@@ -25,15 +27,16 @@
   }
 
   .FeaturedRecipes {
-    margin-top: 2rem;
-    // padding: 1rem;
-    // background: #ffffffcc; /* Semi-transparent white */
-    // border-radius: 8px;
-    // box-shadow: 0 4px 6px #0000001a; /* Light shadow */
+    width: 70%;
+
+    h1 {
+      @extend .text-primary;
+      font-size: 2rem;
+    }
 
     h2 {
       font-size: 1.5rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
       color: #333333; /* Dark gray */
     }
 

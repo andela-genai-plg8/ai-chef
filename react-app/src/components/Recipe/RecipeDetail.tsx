@@ -1,52 +1,45 @@
-import { useMemo, useRef, useState, Fragment } from 'react';
+import React, { useMemo, useRef, useState, Fragment } from 'react';
 import styles from "./Styles.module.scss";
-import { useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
-import { useParams } from 'react-router-dom';
 import ImageGallery from 'react-image-gallery';
 import "react-image-gallery/styles/css/image-gallery.css";
 import classNames from 'classnames';
-import { FaBackward } from 'react-icons/fa';
 import { useMediaQuery } from 'react-responsive';
 import { Recipe } from 'shared-types';
+import e from 'express';
+import { uploadRecipeImage, deleteRecipeImageByUrl } from '../../hooks/useRecipeQuery';
 
 export type RecipeDetailProps = {
   recipe: Recipe;
-  mode: 'view' | 'edit';
+  edit: boolean;
   className?: string;
   onSave?: (updatedRecipe: Recipe) => void;
   onPublish?: (updatedRecipe: Recipe) => void;
 }
 
-const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className }) => {
+const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className, edit, onSave }) => {
   const [activeTab, setActiveTab] = useState<'instructions' | 'videos' | 'restaurants'>('instructions');
 
   const imageGalleryRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
-  const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const [isSticky, setIsSticky] = useState(false);
-
-  
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 390 });
   const imageGalleryDim = useMemo(() => {
     if (isMobile && pageRef.current) {
       return { height: 300, width: pageRef.current.clientWidth - 50 }; // Fallback to 400 if ref is not available
     }
 
+    console.log("imageGalleryRef", imageGalleryRef.current?.getBoundingClientRect());
     return imageGalleryRef.current?.getBoundingClientRect() || { height: 400, width: 400 }; // Fallback to 400 if ref is not available
   }, [imageGalleryRef, pageRef]);
 
   return (
-    <div className={styles.RecipeDetail} ref={pageRef}>
-      <div ref={titleRef} className={classNames(styles.Title, { [styles.TitleSticky]: isSticky })}>
-        <button className={styles.BackButton} onClick={() => window.history.back()} >
-          <FaBackward />
-        </button>
-        <h1>{recipe.name}</h1>
-      </div>
+    <div className={classNames(styles.RecipeDetail, className)} ref={pageRef}>
       {/* sentinel element just below the title to detect when it scrolls out of view */}
       {/* <div ref={sentinelRef} style={{ height: 1, width: '100%' }} /> */}
+      {edit}
       <div className={styles["container"]}>
         <div className={styles.TopColumns}
           style={isMobile && pageRef.current ? { maxWidth: '100%', width: '100%' } as React.CSSProperties : undefined}>
@@ -69,18 +62,84 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className }) => {
               ref={imageGalleryRef}
             >
               {recipe.image && (
-                <ImageGallery
-                  items={([recipe.image, ...(recipe.otherImages || [])]).map((img, idx) => ({
-                    original: img,
-                    thumbnail: img,
-                    description: `${recipe.name} ${idx + 1}`,
-                    // originalHeight: imageGalleryDim.height,
-                    originalWidth: imageGalleryDim.width,
-                  }))}
-                  showThumbnails={false}
-                  showFullscreenButton={false}
-                />
+                <React.Fragment>
+                  <ImageGallery
+                    items={([recipe.image, ...(recipe.otherImages || [])]).map((img, idx) => ({
+                      original: img,
+                      thumbnail: img,
+                      description: `${recipe.name} ${idx + 1}`,
+                      // originalHeight: imageGalleryDim.height,
+                      originalWidth: imageGalleryDim.width,
+                    }))}
+                    showThumbnails={false}
+                    showFullscreenButton={false}
+                  />
+                  {
+                    edit && (
+                      <button
+                        className={classNames(styles.PrimaryButton, styles.RemoveButton)}
+                        onClick={async () => {
+                          if (!recipe.image) return;
+                          setRemoving(true);
+                          try {
+                            await deleteRecipeImageByUrl(recipe.image);
+                            // NOTE: shared-types currently declares image as string; cast to any here.
+                            const updated: Recipe = { ...recipe, image: (null as unknown) as any } as Recipe;
+                            if (onSave) onSave(updated);
+                          } catch (err) {
+                            console.error('Remove failed', err);
+                          } finally {
+                            setRemoving(false);
+                          }
+                        }}
+                        disabled={removing}
+                      >
+                        {removing ? 'Removing...' : 'Remove'}
+                      </button>
+                    )
+                  }
+                </React.Fragment>
               )}
+
+
+              {
+                edit && !recipe.image && (
+                  <>
+                    <button
+                      className={classNames(styles.PrimaryButton, styles.AddButton)}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Uploading...' : 'Add'}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files && e.target.files[0];
+                        if (!file) return;
+                        try {
+                          setUploading(true);
+                          const url = await uploadRecipeImage(file, recipe);
+                          const updated: Recipe = {
+                            ...recipe,
+                            image: url,
+                            otherImages: [ ...(recipe.otherImages || []) ],
+                          };
+                          if (onSave) onSave(updated);
+                        } catch (err) {
+                          console.error('Upload failed', err);
+                        } finally {
+                          setUploading(false);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }
+                      }}
+                    />
+                  </>
+                )
+              }
             </div>
           </div>
         </div>
@@ -115,13 +174,13 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className }) => {
           <div className={styles.TabContent}>
             {activeTab === 'instructions' && (
               // <div className={styles.Section} style={{ marginTop: 0 }}>
-                <ul className={styles.InstructionsList}>
-                  {recipe.instructions.map((step, idx) => (
-                    <li key={idx} className={styles.InstructionItem}>
-                      <span className={styles.StepNum}></span> {step.instruction} {step.duration ? <span className={styles.StepDuration}>({step.duration} min)</span> : null}
-                    </li>
-                  ))}
-                </ul>
+              <ul className={styles.InstructionsList}>
+                {recipe.instructions.map((step, idx) => (
+                  <li key={idx} className={styles.InstructionItem}>
+                    <span className={styles.StepNum}></span> {step.instruction} {step.duration ? <span className={styles.StepDuration}>({step.duration} min)</span> : null}
+                  </li>
+                ))}
+              </ul>
             )}
             {activeTab === 'restaurants' && (
               <div className={styles.section} style={{ marginTop: 0 }}>

@@ -6,6 +6,9 @@ import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
 import { useNavigate } from 'react-router-dom';
 import { Recipe } from 'shared-types';
 import classNames from 'classnames';
+import { FaP } from 'react-icons/fa6';
+import { FaPlus } from 'react-icons/fa';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Props for RecipeList
@@ -21,12 +24,13 @@ export type RecipeListProps = {
   className?: string;
   recipeList?: Recipe[];
   limit?: number;
+  personal?: boolean;
   loading?: boolean;
   noMoreItems?: boolean;
   onGetMoreRecipes?: () => void;
 }
 
-const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, onGetMoreRecipes, loading, noMoreItems }) => {
+const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, limit, className, onGetMoreRecipes, loading, noMoreItems }) => {
   const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
   const items = ((recipeList === undefined ? promotedRecipes : recipeList) || []);
   const listToRender = items.filter((_, index) => limit === undefined || index < limit);
@@ -34,6 +38,7 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     // If there's no callback or we're still loading the promoted data, do nothing.
@@ -86,7 +91,22 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
 
   const navigate = useNavigate();
   return (
-  <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
+    <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
+      {
+        user && personal &&
+        <div
+          className={styles.RecipeCard}
+          key={`add-new-recipe`}
+          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #ccc', color: '#888', height: 200 }}
+          onClick={() => {
+            navigate(`/recipes/new`)
+          }}
+        >
+          {/* add a big plus icon */}
+          <FaPlus size={48} color="#888" />
+          <div>Add New Recipe</div>
+        </div>
+      }
       {isPromotedLoading && !recipeList ? (
         <div>Loading promoted recipes...</div>
       ) : (
@@ -99,21 +119,24 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, limit, className, o
                   className={styles.RecipeCard}
                   key={`${recipe.id}-${recipe.slug}-${idx}`}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/recipe/${recipe.slug}`)}
+                  onClick={() => {
+                    if (personal) navigate(`/my/recipe/${recipe.id}`)
+                    else navigate(`/recipe/${recipe.slug}`)
+                  }}
                 >
                   <RecipeCard recipe={recipe} />
                 </div>
               );
             })
-            }
-            {
-              (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading && listToRender.length > 0) &&
-              <div className={styles.LoadMore} ref={loadMoreRef}><span>Load more...</span></div>
-            }
-            {
-              (typeof onGetMoreRecipes === 'function' && loading) &&
-              <div className={styles.LoadMore}><span>Loading...</span></div>
-            }
+          }
+          {
+            (typeof onGetMoreRecipes === 'function' && !noMoreItems && !loading && listToRender.length > 0) &&
+            <div className={styles.LoadMore} ref={loadMoreRef}><span>Load more...</span></div>
+          }
+          {
+            (typeof onGetMoreRecipes === 'function' && loading) &&
+            <div className={styles.LoadMore}><span>Loading...</span></div>
+          }
         </Fragment>
       )}
     </div>

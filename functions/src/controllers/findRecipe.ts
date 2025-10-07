@@ -11,10 +11,15 @@ export const findRecipe = functions.https.onRequest(async (req: Request, res: Re
 
   if (tags.length > 0) {
     if (!apps.length) {
-      initializeApp({
-        credential: credential.applicationDefault(),
-        databaseURL: process.env.DATABASE_URL,
-      });
+      const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+      if (usingEmulator) {
+        initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+      } else {
+        initializeApp({
+          credential: credential.applicationDefault(),
+          databaseURL: process.env.DATABASE_URL,
+        });
+      }
     }
 
     // load documents from firebase

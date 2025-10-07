@@ -26,10 +26,18 @@ export const chat = functions.https.onRequest(async (req: Request, res: Response
 
     if (recommendations.length > 0) {
       if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault(),
-          databaseURL: process.env.DATABASE_URL,
-        });
+        const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+        if (usingEmulator) {
+          // When running with the Firestore emulator, avoid calling
+          // admin.credential.applicationDefault() which triggers a network
+          // token fetch. Initialize using a minimal config.
+          admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+        } else {
+          admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+            databaseURL: process.env.DATABASE_URL,
+          });
+        }
       }
 
       // add any recommendation that is not already in firebase firestore to it.

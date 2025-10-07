@@ -1,9 +1,9 @@
 import styles from "./Styles.module.scss";
 import RecipeList from '@/components/Recipe/RecipeList';
 import Search from "@/components/Search/Search";
+import TopMenu from "@/components/TopMenu/TopMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllRecipesQuery } from '@/hooks/useRecipeQuery';
-import { all } from "axios";
 import classNames from "classnames";
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { CSSProperties } from "react";
@@ -16,18 +16,18 @@ export type AllRecipesProps = {
   personal?: boolean;
 };
 
-const AllRecipes: React.FC<AllRecipesProps> = ({ className, style, personal = false }) => {
+const AllRecipes: React.FC<AllRecipesProps> = ({ personal = false }) => {
   const PAGE_SIZE = 10;
   const [allRecipes, setAllRecipes] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined); // startAfter id used to fetch next page
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreTimeoutRef = useRef<number | null>(null);
   const [endOfList, setEndOfList] = useState<boolean>(false);
-  const user = useAuth().user;
-  const location = useLocation();
+  const { user } = useAuth();
 
-  const filterByUser = location.pathname.startsWith("/my/") ? user?.uid : undefined;
+  const filterByUser = personal && user?.uid ? user.uid : undefined;
   const { data: pageData, isLoading } = useAllRecipesQuery(PAGE_SIZE, cursor, filterByUser);
+
 
   const lastDocId = useMemo(() => {
     return allRecipes.length > 0 ? allRecipes[allRecipes.length - 1].id : undefined;
@@ -51,7 +51,15 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ className, style, personal = fa
       setAllRecipes((prev) => {
         let newRecipes = recipes.filter((r: { id: string }) => !oldIds.includes(r.id));
         newRecipes = recipes.filter((r: { slug: string }) => !oldSlugs.includes(r.slug));
-        return [...prev, ...newRecipes];
+
+        const combined = [...prev, ...newRecipes].reduce((acc: any, curr: any) => {
+          if (!acc.find((item: any) => item.id === curr.id)) {
+            acc.push(curr);
+          }
+          return acc;
+        }, []); // remove duplicates
+        
+        return combined;
       });
     }
 
@@ -91,12 +99,8 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ className, style, personal = fa
     <div className={styles.AllRecipes}>
       <div className={styles.Heading}>
         <div className={styles.HeadingContainer}>
-          <div className={styles.Links}>
-            <Link to="/recipes" className={classNames(styles.BackLink, { [styles.Active]: !filterByUser })}>All Recipes</Link>
+          <TopMenu personal={personal} />
 
-            <Link to="/my/recipes" className={classNames(styles.BackLink, { [styles.Active]: filterByUser })}>My Recipes</Link>
-
-          </div>
           <div className={styles.Title}>
             <h1>Search for Recipes</h1>
           </div>
@@ -107,7 +111,7 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ className, style, personal = fa
       {
         filterByUser && !isLoading && allRecipes.length === 0 && <div className={styles.RecipeList}><p>You have not added recipes yet.</p></div>
       }
-      <RecipeList className={styles.RecipeList} recipeList={allRecipes} loading={isLoading} noMoreItems={endOfList} onGetMoreRecipes={handleGetMoreRecipes} />
+      <RecipeList className={styles.RecipeList} personal={personal} recipeList={allRecipes} loading={isLoading} noMoreItems={endOfList} onGetMoreRecipes={handleGetMoreRecipes} />
     </div>
   );
 }

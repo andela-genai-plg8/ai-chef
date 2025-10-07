@@ -22,10 +22,15 @@ export const bootstrap = functions.https.onRequest(async (req: Request, res: Res
 
 async function setupFirestore(): Promise<{ [key: string]: any[] }> {
     if (!admin.apps.length) {
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            databaseURL: process.env.DATABASE_URL,
-        });
+        const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+        if (usingEmulator) {
+            admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+        } else {
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                databaseURL: process.env.DATABASE_URL,
+            });
+        }
     }
 
     const db = getFirestore();
@@ -126,13 +131,6 @@ async function setupFirestore(): Promise<{ [key: string]: any[] }> {
 
         for (let i = 0; i < results.length; i += BATCH_SIZE) {
             const chunk = results.slice(i, i + BATCH_SIZE);
-            // const ids = chunk.map(r => r.id);
-
-            // const snapshot = await db.collection(dataCollection.name).where("__name__", "in", ids).get();
-
-            // remove the returned ids from the chunk, so we only add new records
-            // const existingIds = snapshot.docs.map(doc => doc.id);
-            // const newRecords = chunk.filter(record => !existingIds.includes(record.id));
 
             if (chunk.length === 0) {
                 console.log(`${dataCollection.name}: no new items in this batch. Moving to next batch.`);

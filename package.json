@@ -5,6 +5,26 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "typescript": "^5.9.2"
-  }
+    "typescript": "^5.9.2",
+    "concurrently": "^8.2.0"
+  },
+  "name": "openai",
+  "version": "1.0.0",
+  "description": "A modern web application that helps users discover, cook, and order delicious meals based on the ingredients they have or by providing meal inspiration.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently -k -n \"fn:watch,fn:serve,web\" -c \"blue,magenta,green\" \"npm --prefix functions run watch\" \"npm --prefix functions run serve\" \"npm --prefix react-app run dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andela-genai-plg8/superapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andela-genai-plg8/superapp/issues"
+  },
+  "homepage": "https://github.com/andela-genai-plg8/superapp#readme"
 }

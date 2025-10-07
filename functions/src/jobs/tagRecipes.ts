@@ -6,10 +6,15 @@ import { Recipe } from "shared-types";
 
 async function tag() {
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: process.env.DATABASE_URL,
-    });
+    const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+    if (usingEmulator) {
+      admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        databaseURL: process.env.DATABASE_URL,
+      });
+    }
   }
 
   // get 30 recipes whose tagged property is either missing or set to false

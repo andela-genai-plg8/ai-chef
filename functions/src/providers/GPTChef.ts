@@ -1,11 +1,11 @@
 import API, { OpenAI } from "openai";
 import { Chef, ChatHistory, ChatItem, GetResponseParams } from "./Chef";
-// import { Chat } from "openai/resources/index";
 import { Recipe } from "shared-types";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { Document } from "@langchain/core/documents";
 import { randomUUID } from "crypto";
+import * as admin from "firebase-admin";
 
 /**
  * GPTChef - provider that talks to OpenAI and a Qdrant vector store.
@@ -27,6 +27,19 @@ export class GPTChef extends Chef {
       openAIApiKey: process.env.OPENAI_API_KEY,
       model: "text-embedding-3-small"
     });
+
+    // Initialize Firebase Admin SDK if not already initialized
+    if (!admin.apps.length) {
+      const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+      if (usingEmulator) {
+        admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+      } else {
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          databaseURL: process.env.DATABASE_URL,
+        });
+      }
+    }
   }
 
   /**
@@ -71,29 +84,40 @@ export class GPTChef extends Chef {
     const embedding = response.data[0].embedding;
     console.info(`Searched embedding: '${ingredients}', length: ${embedding.length}`);
 
-    // Query Qdrant for nearest neighbors. We send the vector and request payloads.
-    const COLLECTION = "ingredients";
-    const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vector: {
-          name: "small_model",
-          vector: embedding,
-        },
-        top: 5,
-        with_payload: true,
-      }),
+    // Use the QdrantVectorStore wrapper to perform a similarity search.
+    // Initialize the store if it hasn't been created yet (use the same connection
+    // settings as used by storeEmbeddings).
+    // const COLLECTION = process.env.QDRANT_COLLECTION || "ingredients";
+    if (!this.store) {
+      const qdranConn = {
+        collectionName: process.env.QDRANT_COLLECTION,
+        url: process.env.QDRANT_URL || 'http://localhost:6333',
+        apiKey: process.env.QDRANT_API_KEY || undefined,
+      };
+      this.store = await QdrantVectorStore.fromExistingCollection(this.embeddings!, qdranConn);
+    }
+
+    // similaritySearchVectorWithScore returns tuples of [Document, score]
+    const results: Array<[Document, number]> = await (this.store as any).similaritySearchVectorWithScore(embedding, 5);
+
+    const recipes = results.map(([doc, score]) => {
+      // The original recipe info is stored in metadata when we added documents.
+      // Return a best-effort recipe object containing metadata and the text.
+      return {
+        ...(doc.metadata || {}),
+        description: doc.pageContent || '',
+        _score: score,
+      } as unknown as Recipe;
     });
 
-    const data: any = await res.json();
-    // extract payload (recipes) and scores from the Qdrant response
-    const recipes = (data.result || []).map((d: any) => d.payload);
-    const scores = (data.result || []).map((d: any) => d.score);
+    // use the doc_id to get the full recipe from Firestore
+    const docIds = (recipes as unknown as { doc_id: string }[]).map(r => r.doc_id);
 
-    console.log(`Returning recipes from searchForMatchingRecipeByVector: ${recipes.length} recipes, queried ingredients: ${ingredients}, scores: ${scores}`);
-
-    this.recipeRecommendations = recipes as Recipe[];
+    // use the docIds to get the full recipe from Firestore
+    const recipesSnapshot = await admin.firestore().collection("recipes").where("uuid", "in", docIds).get();
+    const fullRecipes = recipesSnapshot.docs.map(doc => doc.data());
+ 
+    this.recipeRecommendations = fullRecipes as Recipe[];
     return this.recipeRecommendations;
   }
 
@@ -106,7 +130,7 @@ export class GPTChef extends Chef {
     if (!this.store) {
       const qdranConn = {
         collectionName: process.env.QDRANT_COLLECTION,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
+        url: process.env.QDRANT_URL,
         apiKey: process.env.QDRANT_API_KEY || undefined,
       }
 
@@ -115,20 +139,21 @@ export class GPTChef extends Chef {
       this.store = await QdrantVectorStore.fromExistingCollection(this.embeddings!, qdranConn);
     }
 
-
-    const documents: Document[] = recipes.map(r => new Document({
-      id: r.uuid || randomUUID(),
-      pageContent: (r?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/") || r.description || "",
+    const documents: Document[] = recipes.map(r => {
+      r.uuid = r.uuid || randomUUID();
+      return new Document({
+      id: r.uuid,
+      pageContent: `(${(r?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/")}) - ${r.description || ""}`,
       metadata: {
         doc_id: r.uuid,
         slug: r.slug,
         name: r.name,
       }
-    }));
+    })});
 
     await this.store.addDocuments(documents);
 
-    return documents;
+    return recipes;
   }
 
   async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
