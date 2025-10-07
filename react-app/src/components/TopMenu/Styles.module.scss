@@ -1,0 +1,35 @@
+@use "@/index.module.scss";
+
+.TopMenu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  max-height: 50px;
+  // width: 100%;
+  @extend .p-2;
+
+  // .Links {
+  //   display: flex;
+  //   align-items: center;
+  //   justify-content: flex-start;
+  //   grid-area: stack;
+  //   z-index: 1;
+    @extend .ms-2;
+    @extend .mb-2;
+    .BackLink {
+      @extend .btn;
+      @extend .me-2;
+      text-decoration: none;
+      min-width: 150px;
+
+      &:not(.Active) {
+        @extend .btn-secondary;
+      }
+
+      &.Active {
+        @extend .btn-primary;
+      }
+    }
+  }
+// }

@@ -6,6 +6,9 @@ import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
 import { useNavigate } from 'react-router-dom';
 import { Recipe } from 'shared-types';
 import classNames from 'classnames';
+import { FaP } from 'react-icons/fa6';
+import { FaPlus } from 'react-icons/fa';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Props for RecipeList
@@ -35,6 +38,7 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, l
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     // If there's no callback or we're still loading the promoted data, do nothing.
@@ -88,6 +92,21 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, l
   const navigate = useNavigate();
   return (
     <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
+      {
+        user && personal &&
+        <div
+          className={styles.RecipeCard}
+          key={`add-new-recipe`}
+          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #ccc', color: '#888', height: 200 }}
+          onClick={() => {
+            navigate(`/recipes/new`)
+          }}
+        >
+          {/* add a big plus icon */}
+          <FaPlus size={48} color="#888" />
+          <div>Add New Recipe</div>
+        </div>
+      }
       {isPromotedLoading && !recipeList ? (
         <div>Loading promoted recipes...</div>
       ) : (

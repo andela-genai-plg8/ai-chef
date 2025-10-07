@@ -1,13 +1,13 @@
 // src/hooks/useAuth.ts
 import { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged, onIdTokenChanged, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, onIdTokenChanged, signOut, User } from "firebase/auth";
 import { useAppState } from "@/hooks/useAppState";
 
 export function useAuth(currentRoute?: string) {
-  // const [user, setUser] = useState<User | null>(null);
   const { previousPath, user, setPreviousPath, setUser, setAuthToken } = useAppState();
+  console.log("useAuth called with route:", currentRoute, "previousPath:", previousPath);
 
-  if (currentRoute !== previousPath && currentRoute !== undefined) {
+  if (currentRoute !== previousPath && currentRoute != "/login" && currentRoute !== undefined) {
     setPreviousPath(currentRoute);
   }
 
@@ -48,5 +48,5 @@ export function useAuth(currentRoute?: string) {
     };
   }, []);
 
-  return { user, previousPath };
+  return { user, previousPath, setPreviousPath, signOut: () => signOut(getAuth()) };
 }

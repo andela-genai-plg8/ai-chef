@@ -13,6 +13,14 @@
         "function": "chat"
       },
       {
+        "source": "/api/parseRecipe",
+        "function": "parseRecipe"
+      },
+      {
+        "source": "/api/findRecipe",
+        "function": "findRecipe"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

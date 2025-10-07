@@ -103,7 +103,7 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className, edit, on
 
 
               {
-                edit && (
+                edit && !recipe.image && (
                   <>
                     <button
                       className={classNames(styles.PrimaryButton, styles.AddButton)}

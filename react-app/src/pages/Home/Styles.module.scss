@@ -36,5 +36,11 @@
       margin-bottom: 1rem;
       color: #333333; /* Dark gray */
     }
+
+    .MoreLink {
+      @extend .btn;
+      @extend .btn-secondary;
+      @extend .mt-3;
+    }
   }
 }

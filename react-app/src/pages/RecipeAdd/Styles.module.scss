@@ -10,6 +10,18 @@
   background: linear-gradient(to bottom, #ffffff, #f8f9fa);
   overflow-y: scroll;
 
+  .Title {
+    display: grid;
+    grid-template-columns:  auto 1fr;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+      align-self: center;
+      justify-self: center;
+    }
+  }
+
   .RecipeTextarea {
     width: 100%;
     min-height: 70vh;
@@ -17,7 +29,7 @@
     border-radius: 12px;
     padding: 1rem;
     font-size: 1.1rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     resize: vertical;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;

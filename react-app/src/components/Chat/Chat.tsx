@@ -10,6 +10,7 @@ import { Model } from "shared-types";
 import { Link } from "react-router-dom";
 import { FaMicrophone, FaSpeakap, FaTimes } from "react-icons/fa";
 import axios from "axios";
+import { useAuth } from "@/hooks/useAuth";
 
 type ChatMessageProps = {
   msg: { content: string; role: string };
@@ -39,6 +40,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 const Chat = () => {
   let [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   // Persisted open state (default: true). Guard access for SSR.
   const [open, setOpen] = useState<boolean>(() => {
     try {
@@ -274,7 +276,7 @@ const Chat = () => {
           <FaTimes />
         </button>
       </div>
-      <div className={styles.ModelDropdown}>
+      {/* <div className={styles.ModelDropdown}>
         <select
           className={styles.FormSelect}
           value={currentModel}
@@ -282,7 +284,7 @@ const Chat = () => {
         >
           {renderModelDropdown}
         </select>
-      </div>
+      </div> */}
       <div
         className={styles.MessageContainer}
         ref={messageContainerRef}
@@ -317,7 +319,9 @@ const Chat = () => {
           style={{ maxHeight: maxInputHeight, height: 22 }}
         />
         <div className={styles.Buttons}>
-          <button
+          {
+            user &&
+            <button
             className={styles.SpeechButton}
             onMouseDown={startListening}
             onTouchStart={startListening}
@@ -333,7 +337,7 @@ const Chat = () => {
             ) : (
               <FaMicrophone />
             )}
-          </button>
+          </button>}
           <button
             className={styles.SendButton}
             onClick={handleSend}
