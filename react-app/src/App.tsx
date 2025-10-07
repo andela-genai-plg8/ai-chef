@@ -31,7 +31,7 @@ function App() {
       {/* Sidebar */}
       <Sidebar className={styles.Sidebar} />
       {/* Main Content */}
-      <main className={`${styles.MainContent} flex-grow-1 d-flex align-items-start justify-content-center bg-light`} style={{ minHeight: "100vh", width: "calc(100vw - 70px)" }}>
+  <main className={`${styles.MainContent} flex-grow-1 d-flex align-items-start justify-content-center bg-light`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
