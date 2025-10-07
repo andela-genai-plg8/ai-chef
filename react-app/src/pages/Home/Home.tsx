@@ -4,9 +4,11 @@ import RobotChef from '@/assets/Robot Chef.gif';
 import RecipeList from '@/components/Recipe/RecipeList';
 import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
 import { Link } from 'react-router-dom';
+import { useMediaQuery } from 'react-responsive';
 
 function Home() {
   const { data: featuredRecipes, isLoading } = usePromotedRecipesQuery();
+  const isMobile = useMediaQuery({ maxWidth: 390 });
 
   return (
     <div className={styles.Home} style={{ backgroundImage: `url(${RobotChef})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -24,7 +26,7 @@ function Home() {
           <p>Loading...</p>
         ) : (
           <>
-            <RecipeList recipeList={featuredRecipes} />
+            <RecipeList recipeList={featuredRecipes} collapseOnMobile />
             <Link to="/recipes" className={styles.MoreLink}>More</Link>
           </>
         )}

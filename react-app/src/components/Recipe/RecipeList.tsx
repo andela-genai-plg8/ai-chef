@@ -6,9 +6,9 @@ import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
 import { useNavigate } from 'react-router-dom';
 import { Recipe } from 'shared-types';
 import classNames from 'classnames';
-import { FaP } from 'react-icons/fa6';
 import { FaPlus } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
+import { useMediaQuery } from 'react-responsive';
 
 /**
  * Props for RecipeList
@@ -27,10 +27,11 @@ export type RecipeListProps = {
   personal?: boolean;
   loading?: boolean;
   noMoreItems?: boolean;
+  collapseOnMobile?: boolean;
   onGetMoreRecipes?: () => void;
 }
 
-const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, limit, className, onGetMoreRecipes, loading, noMoreItems }) => {
+const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, limit, className, onGetMoreRecipes, loading, noMoreItems, collapseOnMobile = false }) => {
   const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(recipeList === undefined);
   const items = ((recipeList === undefined ? promotedRecipes : recipeList) || []);
   const listToRender = items.filter((_, index) => limit === undefined || index < limit);
@@ -39,6 +40,7 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, l
   const observerRef = useRef<IntersectionObserver | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { user } = useAuth();
+  const isMobile = useMediaQuery({ maxWidth: 600 });
 
   useEffect(() => {
     // If there's no callback or we're still loading the promoted data, do nothing.
@@ -90,8 +92,12 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, l
   }, [listToRender.length, isPromotedLoading, onGetMoreRecipes]);
 
   const navigate = useNavigate();
+
+  console.log('isMobile', isMobile);
+  console.log('collapseOnMobile', collapseOnMobile);
+  console.log('styles.Horizontal', styles.Horizontal);
   return (
-    <div ref={containerRef} className={classNames(styles.RecipeList, className)}>
+    <div ref={containerRef} className={classNames(styles.RecipeList, className, { [styles.Horizontal]: (collapseOnMobile && isMobile) })}>
       {
         user && personal &&
         <div

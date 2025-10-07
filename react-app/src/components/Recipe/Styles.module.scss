@@ -110,6 +110,42 @@
     }
   }
 
+  &.Horizontal {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* momentum on iOS */
+    scroll-behavior: smooth;
+    gap: 1rem;
+    padding: 0 10px;
+
+    /* Make each card occupy the viewport width (minus padding) and snap into place */
+    .RecipeCard {
+      flex: 0 0 calc(100vw - 40px);
+      width: calc(100vw - 20px) !important;
+      scroll-snap-align: start;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: 0px !important;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    /* Hide native scrollbars while preserving scrollability */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+
+    &::-webkit-scrollbar {
+      height: 0; /* WebKit: horizontal scrollbar height */
+      background: transparent;
+    }
+  }
+
   .LoadMore {
     grid-column: 1/-1;
   }
@@ -603,7 +639,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -616,7 +652,7 @@
   padding: 1.25rem;
   width: 460px;
   max-width: calc(100% - 32px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .Field {
