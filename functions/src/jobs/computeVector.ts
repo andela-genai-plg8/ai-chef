@@ -16,10 +16,15 @@ import { randomUUID } from "crypto";
  */
 async function runComputation() {
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: process.env.DATABASE_URL,
-    });
+    const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+    if (usingEmulator) {
+      admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        databaseURL: process.env.DATABASE_URL,
+      });
+    }
   }
 
   // Load the persisted cursor that tracks the last processed recipe id.
@@ -89,7 +94,7 @@ async function runComputation() {
 
   recipes = Array.from(new Map(recipes.map(recipe => [recipe.ref, recipe])).values());
   const chef = await ChefFactory.getChef({ name: "Andel", specifiedModel: process.env.DEFAULT_MODEL });
-  await chef.storeEmbeddings(recipes);
+  recipes = await chef.storeEmbeddings(recipes);
 
   const batch = admin.firestore().batch();
   const currentTime = new Date();
@@ -116,7 +121,7 @@ async function runComputation() {
 }
 
 // Runs every 5 minutes
-export const scheduleComputeVector = functions.scheduler.onSchedule("every 5 minutes", async (context) => {
+export const scheduleComputeVector = functions.scheduler.onSchedule("every 15 minutes", async (context) => {
   await runComputation();
 });
 

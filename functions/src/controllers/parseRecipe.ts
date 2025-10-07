@@ -1,32 +1,64 @@
 import OpenAI from "openai";
 import { Recipe } from "shared-types";
 import * as admin from "firebase-admin";
-import { https } from "firebase-functions/v2";
+import * as functions from "firebase-functions";
+import { Request, Response } from "express";
 
-import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
-
-export const parseRecipe = https.onCall(async (request: CallableRequest<any>) => {
+export const parseRecipe = functions.https.onRequest(async (req: Request, res: Response) => {
   console.log("parseRecipe called");
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'The function must be called while authenticated.');
-  }
-  const recipeText: string = request.data.candidateRecipe || "";
 
   try {
+    // Accept both body.data.candidateRecipe (client uses { data: { candidateRecipe } })
+    // and direct body.candidateRecipe for flexibility.
+    const recipeText: string = (req.body?.data?.candidateRecipe) || req.body?.candidateRecipe || "";
+
+    // Verify Firebase ID token from Authorization header: "Bearer <idToken>"
+    const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
+    if (!authHeader) {
+      res.status(401).json({ error: 'Missing Authorization header' });
+      return;
+    }
+
+    const tokenMatch = authHeader.match(/Bearer\s+(.*)/i);
+    const idToken = tokenMatch ? tokenMatch[1] : authHeader;
+
+    if (!admin.apps.length) {
+      const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+      if (usingEmulator) {
+        admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+      } else {
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          databaseURL: process.env.DATABASE_URL,
+        });
+      }
+    }
+
+    let uid = "";
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      uid = decoded.uid;
+    } catch (err) {
+      console.warn('Failed to verify ID token', err);
+      res.status(401).json({ error: 'Invalid or expired auth token' });
+      return;
+    }
 
     const parsedRecipe = await extractRecipe(recipeText);
     parsedRecipe.slug = parsedRecipe.name.toLowerCase().trim() // TODO: extract generating a slug to common function
-      .replace(/[^a-z0-9\s-]/g, '')   // remove non-alphanumeric chars
-      .replace(/\s+/g, '-')           // replace spaces with hyphens
+      .replace(/[^a-z0-9\\s-]/g, '')   // remove non-alphanumeric chars
+      .replace(/\\s+/g, '-')           // replace spaces with hyphens
       .replace(/-+/g, '-');           // collapse multiple hyphens
-    const newRecipeId = await addRecipe(parsedRecipe, request.auth?.uid || "");
+
+    const newRecipeId = await addRecipe(parsedRecipe, uid || "");
     console.info(`ID of new recipe: ${newRecipeId}`);
 
-    // let [_, __, vector] = await calculateEmbedding(parsedRecipe);
-    // await storeEmbedding(parsedRecipe, vector);
-    return parsedRecipe;
+    res.json({ ...parsedRecipe, id: newRecipeId, slug: newRecipeId });
+    return;
   } catch (err: any) {
-    throw new HttpsError('internal', err.message);
+    console.error('parseRecipe error', err);
+    res.status(500).json({ error: err?.message || String(err) });
+    return;
   }
 });
 
@@ -102,16 +134,21 @@ async function extractRecipe(recipeText: string): Promise<Recipe> {
 async function addRecipe(recipe: Recipe, createdBy: string): Promise<string> {
 
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: process.env.DATABASE_URL,
-    });
+    const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST || !!process.env.FUNCTIONS_EMULATOR;
+    if (usingEmulator) {
+      admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-project' });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        databaseURL: process.env.DATABASE_URL,
+      });
+    }
   }
 
   if (!createdBy) createdBy = "admin";
   const createdAt = new Date();
   const addedDoc = await admin.firestore().collection("recipes").add({ ...recipe, tagged: false, published: false, createdBy, updatedBy: createdBy, createdAt, updatedAt: createdAt, hasVectors: false });
-  
+
   return addedDoc.id
 }
 
