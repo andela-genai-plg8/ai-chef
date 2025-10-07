@@ -160,6 +160,8 @@
       @extend .my-0;
       outline: none;
       box-shadow: none;
+      background-color: transparent;
+      color: #333;
       &:focus {
         outline: none !important;
         box-shadow: none !important;
@@ -173,6 +175,7 @@
       min-height: 60px;
       max-height: 180px;
       padding-right: 76px; /* space for the send button */
+      vertical-align: middle;
 
       /* Hide the resize handle in WebKit-based browsers */
       &::-webkit-resizer {

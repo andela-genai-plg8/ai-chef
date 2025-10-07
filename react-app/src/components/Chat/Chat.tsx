@@ -61,7 +61,6 @@ const Chat = () => {
   const searchedRecipes = useRecipes((state) => state.searchedRecipes);
   const currentModel = useChat((state) => state.currentModel);
   const setCurrentModel = useChat((state) => state.setCurrentModel);
-  // const supportedModels = useChat((state) => state.supportedModels);
   const sendMessage = useChat((state) => state.sendMessage);
   const addMessage = useChat((state) => state.addMessage);
 
@@ -69,8 +68,7 @@ const Chat = () => {
   const chunksRef = useRef<Blob[]>([]);
 
   const { data: { modelsByProviders: supportedModels, models } = { models: [], modelsByProviders: {} }, isLoading: isLoadingModels } = useModels(true);
-  // const supportedModels = modelsByProviders;
-
+ 
   useEffect(() => {
     if (open && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
