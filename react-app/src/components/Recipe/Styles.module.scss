@@ -458,6 +458,21 @@
         @extend .py-2;
         @extend .shadow;
 
+        &.NewIngredient {
+          background: #e9ecef;
+          border: 2px dashed #ced4da;
+          color: #6c757d;
+          font-style: italic;
+          text-align: center;
+          cursor: pointer;
+
+          &:hover {
+            background: #dee2e6;
+            border-color: #adb5bd;
+            color: #495057;
+          }
+        }
+
         display: flex;
         justify-content: space-between;
 
@@ -579,4 +594,52 @@
       }
     }
   }
+}
+
+/* Modal styles for Add Ingredient */
+.ModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.Modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  width: 460px;
+  max-width: calc(100% - 32px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.Field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  input {
+    @extend .form-control;
+    border-radius: 8px;
+  }
+}
+
+.ModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }

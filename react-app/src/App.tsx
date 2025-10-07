@@ -40,7 +40,9 @@ function App() {
           <Route path="/recipes/search" element={<RecipeResults />} />
           <Route path="/my/recipes" element={<ProtectedRoute><AllRecipes personal /></ProtectedRoute>} />
           <Route path="/my/recipe/:slug" element={<ProtectedRoute><RecipePage /></ProtectedRoute>} />
+          <Route path="/my/recipe/:slug/edit" element={<ProtectedRoute><RecipePage edit /></ProtectedRoute>} />
           <Route path="/recipe/:slug" element={<RecipePage />} />
+          <Route path="/recipe/:slug/edit" element={<ProtectedRoute><RecipePage edit /></ProtectedRoute>} />
           <Route path="/recipes/:slug" element={<RecipePage />} />
           <Route path="/restaurant/:slug" element={<ProtectedRoute><RestaurantPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><div>Settings page coming soon!</div></ProtectedRoute>} />

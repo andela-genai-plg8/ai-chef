@@ -50,7 +50,7 @@
       border: none;
     }
 
-  @include m.media-breakpoint-down(sm) {
+    @include m.media-breakpoint-down(sm) {
       display: flex;
       flex-direction: column;
       background: #efefef;
@@ -82,9 +82,38 @@
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     border: none;
     cursor: pointer;
-    transition:
-      transform 0.12s ease,
-      box-shadow 0.12s ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    &.danger {
+      background-color: #dc3545;
+    }
+  }
+
+  .FloatingSaveButton {
+    @extend .btn;
+    @extend .btn-success !optional;
+    @extend .shadow;
+    position: fixed;
+    left: 150px;
+    bottom: 24px;
+    z-index: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background-color: var(--bs-success, #198754); /* fallback to theme success */
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
 
     &:hover {
       transform: translateY(-3px);
