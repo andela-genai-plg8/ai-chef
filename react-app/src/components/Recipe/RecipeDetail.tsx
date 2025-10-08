@@ -119,8 +119,6 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className, edit, on
   }, [imageGalleryContainerRef, pageRef]);
 
   const user = useAuth();
-  const currentUid = user?.user?.uid;
-  console.log('Current user id', currentUid);
 
   function handleRemoveIngredient(e: React.MouseEvent, idx: number): void {
     e.stopPropagation();
@@ -130,7 +128,6 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className, edit, on
     if (onChange) onChange(updatedRecipe);
   }
 
-  console.log('recipe detail render', { recipe, imageGalleryDim, isMobile });
   return (
     <div className={classNames(styles.RecipeDetail, className)} ref={pageRef}>
       {/* sentinel element just below the title to detect when it scrolls out of view */}

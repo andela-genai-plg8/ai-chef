@@ -92,10 +92,6 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipeList, personal = false, l
   }, [listToRender.length, isPromotedLoading, onGetMoreRecipes]);
 
   const navigate = useNavigate();
-
-  console.log('isMobile', isMobile);
-  console.log('collapseOnMobile', collapseOnMobile);
-  console.log('styles.Horizontal', styles.Horizontal);
   return (
     <div ref={containerRef} className={classNames(styles.RecipeList, className, { [styles.Horizontal]: (collapseOnMobile && isMobile) })}>
       {
