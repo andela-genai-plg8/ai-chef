@@ -162,11 +162,7 @@
 
   // Tabs
   .TabsContainer {
-    // width: 100%;
-    // margin: 0 auto 2rem auto;
     background: white;
-    // border-radius: 16px;
-    // box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 
     .TabsRow {
       display: flex;
@@ -227,67 +223,11 @@
   }
 
   .TopColumns {
-    @extend .px-3;
-
     display: flex;
     flex-direction: row;
     gap: 2.5rem;
     align-items: flex-start;
     margin-bottom: 2rem;
-
-    @include m.media-breakpoint-down(sm) {
-      flex-direction: column;
-      flex-flow: column-reverse;
-      overflow: visible;
-      max-width: 100%;
-
-      .CenterColumn {
-        min-width: 100%;
-        max-width: 100%;
-        width: 100%;
-      }
-    }
-
-    // .LeftColumn {
-    //   flex: 2;
-    //   min-width: 280px;
-    //   max-width: 480px;
-    //   display: flex;
-    //   flex-direction: column;
-    //   gap: 1.2rem;
-
-    //   .Section {
-    //     background: #fff;
-    //     border-radius: 16px;
-    //     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    //     padding: 2rem;
-    //     margin-bottom: 2rem;
-    //     border: 1px solid rgba(0, 0, 0, 0.05);
-
-    //     &.Ingredients {
-    //       background-color: inherit;
-    //     }
-
-    //     h2 {
-    //       font-size: 1.5rem;
-    //       font-weight: 700;
-    //       color: #2c3e50;
-    //       margin-bottom: 1.5rem;
-    //       position: relative;
-
-    //       &::after {
-    //         content: "";
-    //         position: absolute;
-    //         bottom: -8px;
-    //         left: 0;
-    //         width: 40px;
-    //         height: 3px;
-    //         background: linear-gradient(to right, #fd7e14, #e74c3c);
-    //         border-radius: 2px;
-    //       }
-    //     }
-    //   }
-    // }
 
     .CenterColumn {
       flex: 0.5;
@@ -319,13 +259,15 @@
         min-height: 300px;
 
         /* react-image-gallery internals: make slides flow and images responsive */
-        .image-gallery-slide,
-        .image-gallery-image,
-        img.image-gallery-image {
+        :global( .image-gallery-slide img)
+        // .image-gallery-image,
+        // img.image-gallery-image
+        {
           width: 100% !important;
-          height: auto !important;
-          display: block !important;
+          height: 500px !important;
+          // display: block !important;
           object-fit: cover;
+          object-position: center;
         }
 
         /* wrapper should expand to the image height */
@@ -334,8 +276,7 @@
         }
 
         /* center Add button inside the gallery */
-        .RemoveButton,
-        .AddButton {
+        .ImageActions {
           position: absolute;
           bottom: 12px;
           left: 50%;
@@ -343,6 +284,33 @@
           align-self: center;
           margin: 0;
           z-index: 20;
+        }
+      }
+    }
+
+    @include m.media-breakpoint-down(sm) {
+      & {
+        flex-direction: column;
+        flex-flow: column-reverse;
+        overflow: visible;
+        max-width: 100%;
+        padding: 0px !important;
+
+        .RightColumn,
+        .CenterColumn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 100%;
+          max-width: 100%;
+          width: 100%;
+          // padding-left: 10px;
+          // padding-right: 10px;
+          & > * {
+            min-width: calc(100vw - 20px);
+            max-width: calc(100vw - 20px);
+          }
         }
       }
     }
@@ -443,8 +411,12 @@
     margin-bottom: 1.5rem;
     line-height: 1.6;
     font-weight: 400;
-    p {
-      text-align: left;
+    resize: vertical;
+    width: 100%;
+    outline: none;
+    & textarea {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
     }
   }
 
@@ -496,9 +468,11 @@
       .IngredientItem {
         @extend .p-md-3;
         @extend .py-md-4;
-        @extend .p-1;
+        @extend .p-2;
         @extend .py-2;
         @extend .shadow;
+        cursor: pointer;
+        text-align: left;
 
         &.NewIngredient {
           background: #e9ecef;
