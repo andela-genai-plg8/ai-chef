@@ -172,7 +172,7 @@ export async function getBySlug(slug: string): Promise<Recipe | null> {
     const docSnap = await getDoc(doc(db, "recipes", slug));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      return { ___id: slug, slug: docSnap.id, ...data, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as unknown as Recipe;
+      return { ___id: slug, slug: docSnap.id, ...data, publishedAt: toDate(data.publishedAt), updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as unknown as Recipe;
     }
   } catch (err) {
     // If getDoc failed due to permissions or other reasons, log and continue
@@ -243,4 +243,22 @@ export async function updateRecipe(id: string, recipe: Recipe): Promise<Recipe> 
     console.error('Failed to update recipe', id, err);
     throw err;
   }
+}
+
+export async function publishRecipe(r: Partial<Recipe & { ___id: string }>): Promise<any> {
+  const { ___id, ...rest } = r;
+  const recipe = { ...rest, id: ___id };
+  console.log('Publishing recipe', recipe);
+
+  const response = await axios.post("/api/publishRecipe", {
+    recipe,
+  });
+
+  console.log(response);
+
+  if (!response.data) {
+    throw new Error("No recipe published");
+  }
+
+  return response.data;
 }
