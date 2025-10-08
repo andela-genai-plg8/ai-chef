@@ -3,11 +3,13 @@ import { create } from "zustand";
 import type { User } from "firebase/auth";
 import { getDictionary } from "@/api/dictionary";
 
+export type AppUser = User & { roles?: string[] };
+
 type AppState = {
   previousPath: string;
   setPreviousPath: (path: string) => void;
-  user?: User | null; // Assuming you're using Firebase for authentication
-  setUser: (user: User | null) => void;
+  user?: AppUser | null; // Assuming you're using Firebase for authentication
+  setUser: (user: AppUser | null) => void;
   // store the current Firebase ID token when available
   authToken?: string | null;
   setAuthToken: (token: string | null) => void;

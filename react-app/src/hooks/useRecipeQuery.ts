@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe } from '../api/recipes';
+import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe, publishRecipe } from '../api/recipes';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
 import { getApp, getApps } from 'firebase/app';
 import '../firebase';
@@ -124,9 +124,10 @@ export function useUpdateRecipeMutation() {
       qc.invalidateQueries({ queryKey: recipeKeys.all });
       qc.invalidateQueries({ queryKey: recipeKeys.promoted });
       // also invalidate by-slug entry if slug is present
-      if (data.id){
+      if (data.id) {
         console.log('Invalidating bySlug for', data.id);
-        qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });}
+        qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });
+      }
     },
   });
 }
@@ -231,4 +232,26 @@ export async function deleteRecipeImageByUrl(url: string): Promise<boolean> {
     // do not rethrow — deletion failure should not block DB updates in the UI flow
     return false;
   }
+}
+
+
+export function usePublishRecipe() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recipe: Recipe | null | undefined) => {
+      if (!recipe) return;
+      return await publishRecipe(recipe);
+    },
+    onSuccess: (data) => {
+      console.log('Published recipe', data);
+      // invalidate general recipe caches so updated recipe is refetched where needed
+      qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });
+      // also invalidate by-slug entry if slug is present
+      if (data.id) {
+        console.log('Invalidating bySlug for', data.id);
+        qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });
+      }
+    },
+  });
 }
