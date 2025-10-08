@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "", style = {}, onWidthCh
   }, [isMenuOpen, onWidthChange]);
 
   return (
-  <nav ref={navRef} className={classNames(styles.Sidebar, className, { [styles.Closed]: !isMenuOpen })} style={{ ...style }}>
+    <nav ref={navRef} className={classNames(styles.Sidebar, className, { [styles.Closed]: !isMenuOpen })} style={{ ...style }}>
       {
         isMobile && <div className={styles.HamburgerMenu} onClick={() => setIsMenuOpen(!isMenuOpen)} title="Menu">
           <GiHamburgerMenu />
@@ -65,25 +65,32 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "", style = {}, onWidthCh
                 <BsFileEarmarkCheck />
               </Link>
             </li>
-            <li>
-              <Link to="/settings" className={styles.Link}>
-                <FaGear />
-              </Link>
+            <li className={styles.PushDown}>
+              <hr />
             </li>
             {
-              user && <li className={styles.Logout}>
-                  <a href="/" onClick={(e) => {
-                    e.preventDefault();
-                    // show confirmation modal
-                    setShowLogoutConfirm(true);
-                  }} className={classNames(styles.Link)} title="Log out">
-                    <LuLogOut />
-                  </a>
-                </li>
+              user &&
+              <li>
+                <Link to="/settings" className={styles.Link}>
+                  <FaGear />
+                </Link>
+              </li>
             }
 
             {
-              !user && <li className={styles.Logout}>
+              user?.uid && <li className={styles.Logout}>
+                <a href="/" onClick={(e) => {
+                  e.preventDefault();
+                  // show confirmation modal
+                  setShowLogoutConfirm(true);
+                }} className={classNames(styles.Link)} title="Log out">
+                  <LuLogOut />
+                </a>
+              </li>
+            }
+
+            {
+              !user?.uid && <li className={styles.Logout}>
                 <a href="#" title="Log in" onClick={(e) => {
                   e.preventDefault();
                   setPreviousPath(location.pathname);
