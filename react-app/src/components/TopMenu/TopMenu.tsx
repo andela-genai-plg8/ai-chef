@@ -1,11 +1,7 @@
 import classNames from "classnames";
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Styles.module.scss"
-import { FaHome, } from "react-icons/fa";
-import { FaGear, } from "react-icons/fa6";
-import { BsFileEarmarkCheck } from "react-icons/bs";
-import { GiKnifeFork } from "react-icons/gi";
 import { useAuth } from "@/hooks/useAuth";
 
 export type SidebarProps = {
