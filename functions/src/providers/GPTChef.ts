@@ -116,9 +116,96 @@ export class GPTChef extends Chef {
     // use the docIds to get the full recipe from Firestore
     const recipesSnapshot = await admin.firestore().collection("recipes").where("uuid", "in", docIds).get();
     const fullRecipes = recipesSnapshot.docs.map(doc => doc.data());
- 
+
     this.recipeRecommendations = fullRecipes as Recipe[];
     return this.recipeRecommendations;
+  }
+
+  async findSimilarRecipes(recipe: Recipe): Promise<{ duplicates: string[]; distinct: string[]; explanation: string }> {
+    // store ingredients in the instance for later reference
+    const ingredients = `(${(recipe?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/")}) - ${recipe.description || ""}`;
+
+    // create an embedding using OpenAI embeddings API
+    const response = await this.openai!.embeddings.create({
+      input: ingredients,
+      model: "text-embedding-3-small", // or use 'text-embedding-3-large'
+    });
+    const embedding = response.data[0].embedding;
+
+    // Use the QdrantVectorStore wrapper to perform a similarity search.
+    // Initialize the store if it hasn't been created yet (use the same connection
+    // settings as used by storeEmbeddings).
+    // const COLLECTION = process.env.QDRANT_COLLECTION || "ingredients";
+    if (!this.store) {
+      const qdranConn = {
+        collectionName: process.env.QDRANT_COLLECTION,
+        url: process.env.QDRANT_URL || 'http://localhost:6333',
+        apiKey: process.env.QDRANT_API_KEY || undefined,
+      };
+
+      this.store = await QdrantVectorStore.fromExistingCollection(this.embeddings!, qdranConn);
+    }
+
+    // similaritySearchVectorWithScore returns tuples of [Document, score]
+    const results: Array<[Document, number]> = await (this.store as any).similaritySearchVectorWithScore(embedding, 3);
+
+    const recipes = results.map(([doc, score]) => {
+      // The original recipe info is stored in metadata when we added documents.
+      // Return a best-effort recipe object containing metadata and the text.
+      return {
+        ...(doc.metadata || {}),
+        description: doc.pageContent || '',
+        _score: score,
+      } as unknown as Recipe;
+    });
+
+    // use the doc_id to get the full recipe from Firestore
+    const docIds = (recipes as unknown as { doc_id: string }[]).map(r => r.doc_id);
+
+    // use the docIds to get the full recipe from Firestore
+    const recipesSnapshot = await admin.firestore().collection("recipes").where("uuid", "in", docIds).get();
+    const fullRecipes = [recipe, ...recipesSnapshot.docs.map(doc => doc.data())].map(({ id, name, ingredients, description, instructions }) => ({ id, name, ingredients, description, instructions }));
+
+    const others = fullRecipes.slice(1).map((r, i) => {
+      return `Recipe ${i + 2}: ${JSON.stringify(r)}`;
+    }).join("\n\n");
+
+    const prompt = `
+Recipe 1 (Reference): ${JSON.stringify(fullRecipes[0])}
+
+Compare Recipe 1 with the following:
+${others}
+
+Respond in JSON like this:
+{
+  "duplicates": ["<Recipe 2>.id", "<Recipe 4>.id"],
+  "distinct": ["<Recipe 3>.id"],
+  "explanation": "'<Recipe 2>.id' and '<Recipe 4>.id' describe the same dish as '<Recipe 1>.id' with slight variations in ingredient order."
+}`;
+
+    // use openai to determine if recipe is an exact duplicate of any of fullRecipes
+    const r = await this.getResponse({
+      systemPrompt: `You are a culinary data analyst. Determine which of the given recipes are duplicates of the first recipe. 
+Two recipes are considered duplicates if they describe the same dish, even with minor differences in ingredients, wording, or formatting.
+Respond with a concise JSON object listing which recipes are duplicates and a brief reason
+Constraint: When outputting JSON or YAML, do not wrap it in Markdown code fences.
+Output the content exactly as it should appear in the file.
+`,
+      prompt,
+      useTools: false,
+    });
+
+    // extract JSON object from the response
+    // extract JSON object from the response
+    //
+    //  {
+    //    "duplicates": ["<Recipe 2>.id", "<Recipe 4>.id"],
+    //    "distinct": ["<Recipe 3>.id"],
+    //    "explanation": "'<Recipe 2>.id' and '<Recipe 4>.id' describe the same dish as '<Recipe 1>.id' with slight variations in ingredient order."
+    //  }
+
+    console.log("findSimilarRecipes response:", r);
+    return JSON.parse(r) as { duplicates: string[]; distinct: string[]; explanation: string };
   }
 
   public async storeEmbeddings(recipes: Recipe[]): Promise<any> {
@@ -134,36 +221,34 @@ export class GPTChef extends Chef {
         apiKey: process.env.QDRANT_API_KEY || undefined,
       }
 
-      console.log("Connecting to Qdrant with:", qdranConn);
-
       this.store = await QdrantVectorStore.fromExistingCollection(this.embeddings!, qdranConn);
     }
 
     const documents: Document[] = recipes.map(r => {
       r.uuid = r.uuid || randomUUID();
       return new Document({
-      id: r.uuid,
-      pageContent: `(${(r?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/")}) - ${r.description || ""}`,
-      metadata: {
-        doc_id: r.uuid,
-        slug: r.slug,
-        name: r.name,
-      }
-    })});
+        id: r.uuid,
+        pageContent: `(${(r?.ingredients || []).map(i => (i.name || "").toLowerCase()).join("/")}) - ${r.description || ""}`,
+        metadata: {
+          doc_id: r.uuid,
+          slug: r.slug,
+          name: r.name,
+        }
+      })
+    });
 
     await this.store.addDocuments(documents);
 
     return recipes;
   }
 
-  async getResponse({ prompt, ...rest }: GetResponseParams = {}): Promise<string> {
+  async getResponse({ prompt, useTools = true, ...rest }: GetResponseParams = {}): Promise<string> {
     await super.getResponse({ prompt, ...rest });
     if (prompt) this.addToHistory({ role: "user", content: prompt });
 
-    const call = async () => {
-      return await this.openai!.chat.completions.create({
-        model: this.model, // or any model you've pulled
-        messages: this.history as API.ChatCompletionMessageParam[],
+    let tools = {};
+    if (useTools) {
+      tools = {
         tools: [
           {
             type: "function",
@@ -193,7 +278,15 @@ export class GPTChef extends Chef {
               },
             },
           },
-        ],
+        ]
+      }
+    }
+
+    const call = async () => {
+      return await this.openai!.chat.completions.create({
+        model: this.model, // or any model you've pulled
+        messages: this.history as API.ChatCompletionMessageParam[],
+        ...tools,
       });
     };
 
@@ -224,7 +317,6 @@ export class GPTChef extends Chef {
               // have role: 'tool', include the tool name, the content, and the
               // original tool_call_id so the model can continue the conversation.
               const content = `This is the data from the tool: ${JSON.stringify(result)}`;
-              console.log(content);
               this.addToHistory({ role: "tool", name: functionCall.name, content, tool_call_id: toolCall.id });
             } catch (error) {
               const errorMessage = typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : String(error);

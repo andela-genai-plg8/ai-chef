@@ -5,8 +5,7 @@ import * as functions from "firebase-functions";
 import { Request, Response } from "express";
 
 export const parseRecipe = functions.https.onRequest(async (req: Request, res: Response) => {
-  console.log("parseRecipe called");
-
+  
   try {
     // Accept both body.data.candidateRecipe (client uses { data: { candidateRecipe } })
     // and direct body.candidateRecipe for flexibility.
@@ -151,45 +150,3 @@ async function addRecipe(recipe: Recipe, createdBy: string): Promise<string> {
 
   return addedDoc.id
 }
-
-// async function calculateEmbedding(recipe: Recipe): Promise<[string, string, number[]]> {
-//   let openai = new OpenAI({
-//     apiKey: process.env.OPENAI_API_KEY,
-//   });
-
-//   let embeddedText = recipe.ingredients.map((ing: any) => ing.name).join('\n');
-
-//   const embeddings = await openai.embeddings.create({
-//     model: "text-embedding-3-small",
-//     input: embeddedText,
-//     encoding_format: "float",
-//   });
-
-//   let embedding = embeddings.data[0];
-//   let vector = embedding.embedding;
-
-//   return [recipe.slug ?? "", embeddedText, vector];
-// }
-
-// // TODO: extract duplicate code from bootstrap
-// async function storeEmbedding(recipe: Recipe, vector: number[]): Promise<any> {
-//   const COLLECTION = 'ingredients';
-//   const res = await fetch(`${process.env.QDRANT_URL}/collections/${COLLECTION}/points`, {
-//     method: 'PUT',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({
-//       points: [
-//         {
-//           id: randomUUID(),
-//           payload: recipe,
-//           vector: {
-//             small_model: vector,
-//             large_model: vector,
-//           },
-//         },
-//       ],
-//     }),
-//   });
-
-//   return await res.json();
-// }

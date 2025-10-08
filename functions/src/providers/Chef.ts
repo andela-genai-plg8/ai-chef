@@ -6,6 +6,7 @@ import * as admin from "firebase-admin";
 export type GetResponseParams = {
   systemPrompt?: string;
   prompt?: string;
+  useTools?: boolean;
   authorizationToken?: string | null;
   callBack?: (data: any) => void;
 };
@@ -270,7 +271,7 @@ export abstract class Chef {
   /**
    * Search the application DB for recipes matching the given ingredients.
    */
-  protected async searchForMatchingRecipeByIngredientNames(ingredientNames: string | string[]): Promise<any> {
+  public async searchForMatchingRecipeByIngredientNames(ingredientNames: string | string[]): Promise<any> {
     this.ingredients = Array.isArray(ingredientNames)
       ? ingredientNames
       : (ingredientNames || "")
@@ -281,6 +282,17 @@ export abstract class Chef {
     const snapshot = await admin.firestore().collection("recipes").where("ingredientList", "array-contains-any", this.ingredients).get();
     this.recipeRecommendations = snapshot.docs.map((doc) => doc.data()) as Recipe[];
     return this.recipeRecommendations;
+  }
+
+  public async findSimilarRecipes(recipe: Recipe): Promise<{ duplicates: string[]; distinct: string[]; explanation: string }> {
+    const duplicates: string[] = [];
+    const distinct: string[] = [];
+    let explanation = "";
+
+    // Implement your logic to find similar recipes here
+    // Populate the duplicates, distinct, and explanation variables accordingly
+
+    return { duplicates, distinct, explanation };
   }
 
   /**
