@@ -1,3 +1,4 @@
+import Header from "@/components/Header/Header";
 import styles from "./Styles.module.scss";
 import RecipeList from '@/components/Recipe/RecipeList';
 import Search from "@/components/Search/Search";
@@ -58,7 +59,7 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ personal = false }) => {
           }
           return acc;
         }, []); // remove duplicates
-        
+
         return combined;
       });
     }
@@ -97,17 +98,7 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ personal = false }) => {
 
   return (
     <div className={styles.AllRecipes}>
-      <div className={styles.Heading}>
-        <div className={styles.HeadingContainer}>
-          <TopMenu personal={personal} />
-
-          <div className={styles.Title}>
-            <h1>Search for Recipes</h1>
-          </div>
-        </div>
-
-        <Search className={styles.Search} />
-      </div>
+      <Header personal={personal} title="All Recipes" />
       {
         filterByUser && !isLoading && allRecipes.length === 0 && <div className={styles.RecipeList}><p>You have not added recipes yet.</p></div>
       }

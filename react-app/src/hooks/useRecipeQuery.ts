@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
 import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe } from '../api/recipes';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
 import { getApp, getApps } from 'firebase/app';
 import '../firebase';
 import { getDictionary } from '../api/dictionary';
@@ -173,15 +173,16 @@ export async function uploadRecipeImage(file: File, recipe: Recipe): Promise<str
  * If the URL cannot be parsed into a storage path, this will attempt best-effort deletion and
  * will otherwise resolve without throwing (but will log warnings).
  */
-export async function deleteRecipeImageByUrl(url: string): Promise<void> {
-  if (!url) return;
+export async function deleteRecipeImageByUrl(url: string): Promise<boolean> {
+  if (!url) return false;
   if (!getApps().length) {
     console.warn('Firebase app is not initialized; cannot delete storage object for url', url);
-    return;
+    return false;
   }
+
   const storage = getStorage(getApp());
+  let refToDelete: any = null;
   try {
-    let refToDelete;
     const idx = url.indexOf('/o/');
     if (idx !== -1) {
       const after = url.substring(idx + 3);
@@ -194,11 +195,40 @@ export async function deleteRecipeImageByUrl(url: string): Promise<void> {
 
     if (refToDelete) {
       await deleteObject(refToDelete);
+      return true;
     } else {
       console.warn('Could not determine storage reference for URL:', url);
+      return false;
     }
-  } catch (err) {
+  } catch (err: any) {
+    // If the object was already deleted, Firebase Storage throws a 'storage/object-not-found' error.
+    // In that case treat the operation as successful (truthy) because the resource is effectively gone.
+    try {
+      const code = err && err.code ? String(err.code) : '';
+      if (code.includes('object-not-found')) {
+        return true;
+      }
+
+      // As a fallback, attempt to fetch metadata; if that also reports missing object, treat as success.
+      if (refToDelete) {
+        try {
+          await getMetadata(refToDelete);
+          // metadata succeeded, so the object exists and delete failed for another reason
+          console.warn('Delete failed but object metadata exists for url', url, err);
+          return false;
+        } catch (metaErr: any) {
+          const metaCode = metaErr && metaErr.code ? String(metaErr.code) : '';
+          if (metaCode.includes('object-not-found')) {
+            return true;
+          }
+        }
+      }
+    } catch (inner) {
+      // ignore
+    }
+
     console.warn('Failed to delete storage object for url', url, err);
     // do not rethrow — deletion failure should not block DB updates in the UI flow
+    return false;
   }
 }
