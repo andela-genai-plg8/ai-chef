@@ -1,14 +1,19 @@
 import styles from "./Styles.module.scss";
-import Search from '@/components/Search/Search';
 import RobotChef from '@/assets/Robot Chef.gif';
 import RecipeList from '@/components/Recipe/RecipeList';
 import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
+import React from "react";
 import { Link } from 'react-router-dom';
-import { useMediaQuery } from 'react-responsive';
 
 function Home() {
-  const { data: featuredRecipes, isLoading } = usePromotedRecipesQuery();
-  const isMobile = useMediaQuery({ maxWidth: 390 });
+  const { data: featuredRecipes, isLoading, refetch } = usePromotedRecipesQuery();
+
+  React.useEffect(() => {
+    console.log('featuredRecipes', featuredRecipes);
+    if (!featuredRecipes || featuredRecipes.length === 0 || !isLoading) {
+      refetch();
+    }
+  }, [refetch, isLoading]);
 
   return (
     <div className={styles.Home} style={{ backgroundImage: `url(${RobotChef})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>

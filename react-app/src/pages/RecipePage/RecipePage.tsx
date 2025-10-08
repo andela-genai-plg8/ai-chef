@@ -1,25 +1,30 @@
-import React, { useMemo, useRef, useState, Fragment } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import styles from "./Styles.module.scss";
-import { useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
+import { usePublishRecipe, useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames';
-import { FaBackward, FaSave } from 'react-icons/fa';
+import { FaSave } from 'react-icons/fa';
 import { FaEdit } from 'react-icons/fa';
 import { AiOutlineLoading } from "react-icons/ai";
 import { GrView } from "react-icons/gr";
-import { useMediaQuery } from 'react-responsive';
+import { MdPublish } from "react-icons/md";
 import RecipeDetail from '@/components/Recipe/RecipeDetail';
 import { useUpdateRecipeMutation } from '@/hooks/useRecipeQuery';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Recipe } from 'shared-types';
+import Header from '@/components/Header/Header';
+import { useAuth } from '@/hooks/useAuth';
+import { RiDeleteBin7Fill } from 'react-icons/ri';
 
 type RecipePageProps = {
   edit?: boolean;
+  personal?: boolean;
 };
 
-const RecipePage: React.FC<RecipePageProps> = ({ edit = false }) => {
+const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false }) => {
   const params = useParams();
   const location = useLocation();
+  const { user } = useAuth();
   const { data: recipeClean, isLoading } = useRecipeBySlugQuery(params.slug || "");
   const { mutate: updateMutation, isPending: saving } = useUpdateRecipeMutation();
   const [currentUid, setCurrentUid] = useState<string | null>(null);
@@ -27,6 +32,7 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false }) => {
   const [recipe, setRecipe] = useState<Recipe | undefined | null>(recipeClean);
   const now = useMemo(() => Date.now(), []);
   if (!recipe && recipeClean || (recipeClean?.updatedAt || now) > (recipe?.updatedAt || now)) setRecipe(recipeClean);
+  const { mutate: publishRecipe, isPending: publishing } = usePublishRecipe();
 
   // capture current firebase user uid if available
   React.useEffect(() => {
@@ -45,21 +51,40 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false }) => {
       return;
     }
   }, []);
-
-  const imageGalleryRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
-  const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const [isSticky, setIsSticky] = useState(false);
 
 
-  const isMobile = useMediaQuery({ maxWidth: 390 });
-  const imageGalleryDim = useMemo(() => {
-    if (isMobile && pageRef.current) {
-      return { height: 300, width: pageRef.current.clientWidth - 50 }; // Fallback to 400 if ref is not available
+  // capture the distance of pageRef from the edge of the viewport and update when it changes
+  const [left, setLeft] = useState<number>(20);
+
+  React.useEffect(() => {
+    const el = pageRef.current;
+    const update = () => {
+      const rect = pageRef.current?.getBoundingClientRect();
+      if (rect) setLeft(rect.left + 20);
+    };
+
+    // initial set
+    update();
+
+    // observe size/position changes
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => update());
+      if (el) ro.observe(el);
+    } catch (e) {
+      // ResizeObserver may not be available in all environments; fall back to window resize
     }
 
-    return imageGalleryRef.current?.getBoundingClientRect() || { height: 400, width: 400 }; // Fallback to 400 if ref is not available
-  }, [imageGalleryRef, pageRef]);
+    window.addEventListener('resize', update);
+
+    return () => {
+      window.removeEventListener('resize', update);
+      if (ro && el) ro.unobserve(el);
+      ro = null;
+    };
+  }, [pageRef.current]);
+
 
   const handleSaveRecipe = async (updatedRecipe: any) => {
     console.log('Saving recipe', updatedRecipe);
@@ -95,30 +120,67 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false }) => {
 
   return (
     <div className={styles.RecipePage} ref={pageRef}>
-      <div ref={titleRef} className={classNames(styles.Title)}>
-        <button className={styles.BackButton} onClick={() => window.history.back()} >
-          <FaBackward />
-        </button>
-        <h1>{recipe.name}</h1>
-      </div>
-      <RecipeDetail recipe={recipe} edit={edit} onSave={handleSaveRecipe}
+      <Header personal={personal} title={recipe.name} >
+        {personal && recipe.published && <span className={classNames(styles.badge, styles["text-success"], styles.border)}>Published</span>}
+        {personal && !recipe.published && <span className={classNames(styles.badge, styles["text-danger"], styles.border)}>Unpublished</span>}
+      </Header>
 
+      <RecipeDetail
+        recipe={recipe}
+        edit={edit}
+        onSave={handleSaveRecipe}
         onChange={handleChangeRecipe}
       />
-      {(currentUid && recipe?.createdBy && currentUid === recipe.createdBy) || true ? (
+      {(currentUid && recipe?.createdBy && currentUid === recipe.createdBy) || (user?.roles?.includes('admin')) ? (
         <React.Fragment>
+          {
+            ((!recipe.published && !recipe.queued) || (recipe?.updatedAt || now) > (recipe?.publishedAt || now)) &&
+            <button
+              className={styles.FloatingEditButton}
+              disabled={publishing || saving}
+              aria-label="Publish recipe"
+              title="Publish recipe"
+              onClick={async () => {
+                await publishRecipe(recipe);
+              }}
+              style={{
+                bottom: 145,
+                left
+              }}
+            >
+                {publishing ? <i className={styles.Rotating}> <AiOutlineLoading /> </i> : <MdPublish />}
+            </button>
+          }
           <button
             className={styles.FloatingEditButton}
+            disabled={publishing || saving}
+            aria-label="Delete recipe"
+            title="Delete recipe"
+            onClick={() => {
+
+            }}
+            style={{
+              bottom: 85,
+              left
+            }}
+          >
+            <RiDeleteBin7Fill />
+          </button>
+          <button
+            className={styles.FloatingEditButton}
+            disabled={publishing || saving}
             aria-label="Edit recipe"
             title="Edit recipe"
             onClick={() => {
-              console.log('location', location);
               if (edit) {
                 // navigate back to view mode
                 navigate(`/recipe/${recipe.slug}`);
               } else {
                 navigate(`./edit`);
               }
+            }}
+            style={{
+              left
             }}
           >
             {edit ? <GrView /> : <FaEdit />}
@@ -131,6 +193,9 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false }) => {
               title="Save recipe"
               onClick={() => {
                 handleSaveRecipe(recipe);
+              }}
+              style={{
+                left: left + 60
               }}
             >
               {saving ? <i className={styles.Rotating}><AiOutlineLoading /> </i> : <FaSave />}
