@@ -71,7 +71,7 @@ export function useAuth(currentRoute?: string) {
   }, []);
 
   return {
-    user, previousPath, setPreviousPath, signOut: () => {
+    user, setUser, previousPath, setPreviousPath, signOut: () => {
       setUser(null);
       setAuthToken(null);
       return signOut(getAuth());

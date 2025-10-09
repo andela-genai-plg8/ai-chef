@@ -218,6 +218,32 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
   });
 }
 
+export async function getRelatedRecipes(slugs?: string[]): Promise<Recipe[]> {
+  const db = getFirestore();
+  const recipesCollection = collection(db, "recipes");
+  const bySlug = query(recipesCollection, where("slug", "in", slugs || []));
+  const byId = query(recipesCollection, where("__name__", "in", slugs || []));
+  const snapshot1 = await getDocs(bySlug);
+  const snapshot2 = await getDocs(byId);
+  
+
+  const recipes = snapshot1.docs.slice(0, 5).map((doc) => {
+    const data = doc.data();
+    return { slug: data.slug, ...data, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as Recipe;
+  });
+
+  snapshot2.docs.slice(0, 5).forEach((doc) => {
+    const data = doc.data();
+    const existing = recipes.find(r => r.slug === data.slug);
+    if (!existing) {
+      recipes.push({ slug: data.slug, ...data, updatedAt: toDate(data.updatedAt), createdAt: toDate(data.createdAt) } as Recipe);
+    }
+  });
+
+
+  return recipes;
+}
+
 /**
  * Delete a storage object given a Firebase download URL or a gs:// URL.
  * If the URL cannot be parsed into a storage path, this will attempt best-effort deletion and

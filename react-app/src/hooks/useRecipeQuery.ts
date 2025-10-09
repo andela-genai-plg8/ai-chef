@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from 'shared-types';
-import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe, publishRecipe } from '../api/recipes';
+import { findRecipe, getAll, getBySlug, getPromotedRecipes, getPaged, getByOwnerPaged, updateRecipe, publishRecipe, getRelatedRecipes } from '../api/recipes';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
 import { getApp, getApps } from 'firebase/app';
 import '../firebase';
@@ -18,6 +18,7 @@ export const recipeKeys = {
   byOwner: (ownerId: string, pageSize: number = 20, startAfterId?: string) => [...recipeKeys.all, 'owner', ownerId, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
   byIngredients: (ingredients: string[]) => [...recipeKeys.all, 'byIngredients', ingredients] as const,
   bySlug: (slug: string) => [...recipeKeys.all, 'bySlug', slug] as const,
+  relatedTo: (slug: string) => [...recipeKeys.all, 'relatedTo', slug] as const,
   byOwnerSlug: (userId: string, slug: string) => [...recipeKeys.all, 'byOwnerSlug', userId, slug] as const,
   promoted: ['recipes', 'promoted'] as const,
 };
@@ -77,6 +78,22 @@ export function useRecipeBySlugQuery(slug: string) {
   return useQuery({
     queryKey: recipeKeys.bySlug(slug),
     queryFn: () => getBySlug(slug),
+    enabled: !!slug,
+  });
+}
+
+export function useRelatedRecipes(slug: string | undefined) {
+
+  const { data: relatedRecipes } = useRecipeBySlugQuery(slug || "");
+
+  return useQuery({
+    queryKey: recipeKeys.relatedTo(slug || ""),
+    queryFn: async () => {
+      if (!slug) return [];
+      
+      const recipeIds = relatedRecipes?.related || [];
+      return await getRelatedRecipes(recipeIds);
+    },
     enabled: !!slug,
   });
 }
