@@ -69,31 +69,32 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "", style = {}, onWidthCh
               <hr />
             </li>
             {
-              user &&
-              <li>
-                <Link to="/settings" className={styles.Link}>
-                  <FaGear />
-                </Link>
-              </li>
+              (user?.isAnonymous !== undefined && user?.isAnonymous !== true) &&
+              <React.Fragment>
+                <li>
+                  <Link to="/settings" className={styles.Link}>
+                    <FaGear />
+                  </Link>
+                </li>
+                <li className={styles.Logout}>
+                  <a href="/" onClick={(e) => {
+                    e.preventDefault();
+                    // show confirmation modal
+                    setShowLogoutConfirm(true);
+                  }} className={classNames(styles.Link)} title="Log out">
+                    <LuLogOut />
+                  </a>
+                </li>
+
+              </React.Fragment>
             }
 
             {
-              user?.uid && <li className={styles.Logout}>
-                <a href="/" onClick={(e) => {
-                  e.preventDefault();
-                  // show confirmation modal
-                  setShowLogoutConfirm(true);
-                }} className={classNames(styles.Link)} title="Log out">
-                  <LuLogOut />
-                </a>
-              </li>
-            }
-
-            {
-              !user?.uid && <li className={styles.Logout}>
+              (user?.uid === undefined || user?.isAnonymous === true) && <li className={styles.Logout}>
                 <a href="#" title="Log in" onClick={(e) => {
                   e.preventDefault();
                   setPreviousPath(location.pathname);
+                  // if(location.pathname === "/login") return; // already there
                   return navigate("/login");
                 }} className={classNames(styles.Link)}>
                   <LuLogIn />

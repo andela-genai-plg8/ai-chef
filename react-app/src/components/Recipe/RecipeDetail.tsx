@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { useMediaQuery } from 'react-responsive';
 import { Recipe } from 'shared-types';
 // import e from 'express';
-import { useUploadRecipeImage } from '../../hooks/useRecipeQuery';
+import { usePromotedRecipesQuery, useUploadRecipeImage } from '../../hooks/useRecipeQuery';
 import { RiDeleteBin7Fill } from "react-icons/ri";
 import { AiOutlineLoading } from 'react-icons/ai';
 import { FaPlus, FaSave, FaTrash } from 'react-icons/fa';

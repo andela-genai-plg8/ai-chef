@@ -152,9 +152,8 @@
 }
 
 .RecipeDetail {
-  height: 100vh;
+  height: auto;
   min-height: 100vh;
-  max-height: 100vh;
   padding-bottom: 2rem;
   background: linear-gradient(to bottom, #ffffff, #f8f9fa);
   overflow-y: scroll;

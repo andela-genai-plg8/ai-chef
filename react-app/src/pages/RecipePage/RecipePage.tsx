@@ -8,12 +8,13 @@ import { AiOutlineLoading } from "react-icons/ai";
 import { GrView } from "react-icons/gr";
 import { MdPublish } from "react-icons/md";
 import RecipeDetail from '@/components/Recipe/RecipeDetail';
-import { useUpdateRecipe, useDeleteRecipe, usePublishRecipe, useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
+import { useUpdateRecipe, useDeleteRecipe, usePublishRecipe, useRecipeBySlugQuery, useRelatedRecipes, usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Recipe } from 'shared-types';
 import Header from '@/components/Header/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { RiDeleteBin7Fill } from 'react-icons/ri';
+import RecipeList from '@/components/Recipe/RecipeList';
 
 type RecipePageProps = {
   edit?: boolean;
@@ -33,7 +34,9 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
   if (!recipe && recipeClean || (recipeClean?.updatedAt || now) > (recipe?.updatedAt || now)) setRecipe(recipeClean);
   const { mutate: publishRecipe, isPending: publishing } = usePublishRecipe();
   const { mutate: deleteRecipe, isPending: deleting } = useDeleteRecipe();
+  const { data: relatedRecipes, isPending: fetchingRelated } = useRelatedRecipes(recipe ? recipe.id : undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { data: promotedRecipes, isLoading: isPromotedLoading } = usePromotedRecipesQuery(true);
 
   // capture current firebase user uid if available
   React.useEffect(() => {
@@ -178,7 +181,7 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
                     try {
                       await deleteRecipe(recipe);
                       setShowDeleteConfirm(false);
-                      if(personal) navigate('/my/recipes');
+                      if (personal) navigate('/my/recipes');
                       else navigate('/recipes');
                     } catch (err) {
                       console.error('Delete failed', err);
@@ -228,6 +231,9 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
           }
         </React.Fragment>
       ) : null}
+
+      <h3>Related Recipes</h3>
+      <RecipeList recipeList={[...relatedRecipes || [], ...promotedRecipes || []].slice(0, 5)} className={styles.container} />
 
     </div >
   );
