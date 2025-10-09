@@ -1,7 +1,7 @@
 import axios from "./axiosClient";
-// import { addDoc,  } from "firebase/firestore";
-
-import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId, updateDoc } from "firebase/firestore";
+import { getApp, getApps } from 'firebase/app';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
+import { collection, getDocs, getFirestore, query, where, doc, getDoc, orderBy, or, limit as fbLimit, startAfter, documentId, updateDoc, deleteDoc } from "firebase/firestore";
 import { Recipe } from "shared-types";
 // src/utils/timestamps.ts
 // Optionally import admin types if you also need Admin SDK helpers.
@@ -219,6 +219,71 @@ export async function getPromotedRecipes(isPromoted: boolean = true): Promise<Re
 }
 
 /**
+ * Delete a storage object given a Firebase download URL or a gs:// URL.
+ * If the URL cannot be parsed into a storage path, this will attempt best-effort deletion and
+ * will otherwise resolve without throwing (but will log warnings).
+ */
+export async function deleteRecipeImageByUrl(url: string): Promise<boolean> {
+  if (!url) return false;
+  if (!getApps().length) {
+    console.warn('Firebase app is not initialized; cannot delete storage object for url', url);
+    return false;
+  }
+
+  const storage = getStorage(getApp());
+  let refToDelete: any = null;
+  try {
+    const idx = url.indexOf('/o/');
+    if (idx !== -1) {
+      const after = url.substring(idx + 3);
+      const pathEncoded = after.split('?')[0];
+      const path = decodeURIComponent(pathEncoded);
+      refToDelete = storageRef(storage, path);
+    } else if (url.startsWith('gs://')) {
+      refToDelete = storageRef(storage, url);
+    }
+
+    if (refToDelete) {
+      await deleteObject(refToDelete);
+      return true;
+    } else {
+      console.warn('Could not determine storage reference for URL:', url);
+      return false;
+    }
+  } catch (err: any) {
+    // If the object was already deleted, Firebase Storage throws a 'storage/object-not-found' error.
+    // In that case treat the operation as successful (truthy) because the resource is effectively gone.
+    try {
+      const code = err && err.code ? String(err.code) : '';
+      if (code.includes('object-not-found')) {
+        return true;
+      }
+
+      // As a fallback, attempt to fetch metadata; if that also reports missing object, treat as success.
+      if (refToDelete) {
+        try {
+          await getMetadata(refToDelete);
+          // metadata succeeded, so the object exists and delete failed for another reason
+          console.warn('Delete failed but object metadata exists for url', url, err);
+          return false;
+        } catch (metaErr: any) {
+          const metaCode = metaErr && metaErr.code ? String(metaErr.code) : '';
+          if (metaCode.includes('object-not-found')) {
+            return true;
+          }
+        }
+      }
+    } catch (inner) {
+      // ignore
+    }
+
+    console.warn('Failed to delete storage object for url', url, err);
+    // do not rethrow — deletion failure should not block DB updates in the UI flow
+    return false;
+  }
+}
+
+/**
  * Update a recipe document by id with the provided recipe payload.
  * The function strips the id field from the payload (if present) and updates
  * the Firestore document at `recipes/{id}`.
@@ -248,7 +313,6 @@ export async function updateRecipe(id: string, recipe: Recipe): Promise<Recipe> 
 export async function publishRecipe(r: Partial<Recipe & { ___id: string }>): Promise<any> {
   const { ___id, ...rest } = r;
   const recipe = { ...rest, id: ___id };
-  console.log('Publishing recipe', recipe);
 
   const response = await axios.post("/api/publishRecipe", {
     recipe,
@@ -261,4 +325,35 @@ export async function publishRecipe(r: Partial<Recipe & { ___id: string }>): Pro
   }
 
   return response.data;
+}
+
+export async function deleteRecipe(recipe: Partial<Recipe & { ___id: string }>): Promise<boolean> {
+  console.log("Deleting recipe", recipe.___id);
+  try {
+    const db = getFirestore();
+    const recipesCollection = collection(db, "recipes");
+    const recipeRef = doc(recipesCollection, recipe.___id);
+
+    // Delete all the images associated with the recipe
+    const recipeDoc = await getDoc(recipeRef);
+    if (recipeDoc.exists()) {
+      const data = recipeDoc.data();
+      const imageUrls: string[] = [];
+      if (data.image) imageUrls.push(data.image);
+      if (data.otherImages && Array.isArray(data.otherImages)) {
+        data.otherImages.forEach((img: any) => {
+          if (typeof img === 'string') imageUrls.push(img);
+          else if (img && typeof img.url === 'string') imageUrls.push(img.url);
+        });
+      }
+
+      await Promise.all(imageUrls.map(url => deleteRecipeImageByUrl(url)));
+    }
+
+    await deleteDoc(recipeRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting recipe:", error);
+    return false;
+  }
 }

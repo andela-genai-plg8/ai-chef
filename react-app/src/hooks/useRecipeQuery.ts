@@ -6,6 +6,8 @@ import { getApp, getApps } from 'firebase/app';
 import '../firebase';
 import { getDictionary } from '../api/dictionary';
 import { getModels } from '@/api/models';
+import { deleteRecipe } from '@/api/recipes';
+import { useAuth } from './useAuth';
 
 // Keys for React Query cache
 // These keys provide deterministic cache identifiers for react-query.
@@ -13,7 +15,7 @@ import { getModels } from '@/api/models';
 export const recipeKeys = {
   all: ['recipes'] as const,
   allPaged: (pageSize: number, startAfterId?: string) => [...recipeKeys.all, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
-  byOwner: (ownerId: string, pageSize: number, startAfterId?: string) => [...recipeKeys.all, 'owner', ownerId, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
+  byOwner: (ownerId: string, pageSize: number = 20, startAfterId?: string) => [...recipeKeys.all, 'owner', ownerId, 'pageSize', pageSize, 'startAfter', startAfterId] as const,
   byIngredients: (ingredients: string[]) => [...recipeKeys.all, 'byIngredients', ingredients] as const,
   bySlug: (slug: string) => [...recipeKeys.all, 'bySlug', slug] as const,
   byOwnerSlug: (userId: string, slug: string) => [...recipeKeys.all, 'byOwnerSlug', userId, slug] as const,
@@ -112,7 +114,7 @@ export function useDictionary() {
  * Mutation hook to update a recipe using the `updateRecipe` API helper.
  * On success it invalidates relevant recipe query caches so UI shows fresh data.
  */
-export function useUpdateRecipeMutation() {
+export function useUpdateRecipe() {
   const qc = useQueryClient();
 
   return useMutation({
@@ -137,7 +139,7 @@ export function useUpdateRecipeMutation() {
  * Uses the recipe object to construct a sensible path. This helper is intentionally
  * side-effect free with respect to Firestore; it only uploads the file and returns the URL.
  */
-export async function uploadRecipeImage(file: File, recipe: Recipe): Promise<string> {
+export async function useUploadRecipeImage(file: File, recipe: Recipe): Promise<string> {
   if (!file || !file.name) throw new TypeError('Invalid file provided to uploadRecipeImage');
   if (!getApps().length) throw new Error('Firebase app is not initialized');
   const app = getApp();
@@ -169,72 +171,6 @@ export async function uploadRecipeImage(file: File, recipe: Recipe): Promise<str
   return url;
 }
 
-/**
- * Delete a storage object given a Firebase download URL or a gs:// URL.
- * If the URL cannot be parsed into a storage path, this will attempt best-effort deletion and
- * will otherwise resolve without throwing (but will log warnings).
- */
-export async function deleteRecipeImageByUrl(url: string): Promise<boolean> {
-  if (!url) return false;
-  if (!getApps().length) {
-    console.warn('Firebase app is not initialized; cannot delete storage object for url', url);
-    return false;
-  }
-
-  const storage = getStorage(getApp());
-  let refToDelete: any = null;
-  try {
-    const idx = url.indexOf('/o/');
-    if (idx !== -1) {
-      const after = url.substring(idx + 3);
-      const pathEncoded = after.split('?')[0];
-      const path = decodeURIComponent(pathEncoded);
-      refToDelete = storageRef(storage, path);
-    } else if (url.startsWith('gs://')) {
-      refToDelete = storageRef(storage, url);
-    }
-
-    if (refToDelete) {
-      await deleteObject(refToDelete);
-      return true;
-    } else {
-      console.warn('Could not determine storage reference for URL:', url);
-      return false;
-    }
-  } catch (err: any) {
-    // If the object was already deleted, Firebase Storage throws a 'storage/object-not-found' error.
-    // In that case treat the operation as successful (truthy) because the resource is effectively gone.
-    try {
-      const code = err && err.code ? String(err.code) : '';
-      if (code.includes('object-not-found')) {
-        return true;
-      }
-
-      // As a fallback, attempt to fetch metadata; if that also reports missing object, treat as success.
-      if (refToDelete) {
-        try {
-          await getMetadata(refToDelete);
-          // metadata succeeded, so the object exists and delete failed for another reason
-          console.warn('Delete failed but object metadata exists for url', url, err);
-          return false;
-        } catch (metaErr: any) {
-          const metaCode = metaErr && metaErr.code ? String(metaErr.code) : '';
-          if (metaCode.includes('object-not-found')) {
-            return true;
-          }
-        }
-      }
-    } catch (inner) {
-      // ignore
-    }
-
-    console.warn('Failed to delete storage object for url', url, err);
-    // do not rethrow — deletion failure should not block DB updates in the UI flow
-    return false;
-  }
-}
-
-
 export function usePublishRecipe() {
   const qc = useQueryClient();
 
@@ -244,7 +180,6 @@ export function usePublishRecipe() {
       return await publishRecipe(recipe);
     },
     onSuccess: (data) => {
-      console.log('Published recipe', data);
       // invalidate general recipe caches so updated recipe is refetched where needed
       qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });
       // also invalidate by-slug entry if slug is present
@@ -252,6 +187,25 @@ export function usePublishRecipe() {
         console.log('Invalidating bySlug for', data.id);
         qc.invalidateQueries({ queryKey: recipeKeys.bySlug(data.id) });
       }
+    },
+  });
+}
+
+export function useDeleteRecipe() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (recipe: Recipe) => {
+      return await deleteRecipe(recipe);
+    },
+    onSuccess: (_data) => {
+      console.log('Deleted recipe', _data);
+      // invalidate general recipe caches so deleted recipe is removed where needed
+      if (user?.uid) {
+        qc.invalidateQueries({ queryKey: recipeKeys.byOwner(user.uid, 20) });
+      }
+      qc.invalidateQueries({ queryKey: recipeKeys.promoted });
     },
   });
 }
