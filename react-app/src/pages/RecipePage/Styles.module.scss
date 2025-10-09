@@ -92,6 +92,13 @@
     &.danger {
       background-color: #dc3545;
     }
+
+    &:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
   }
 
   .FloatingSaveButton {
@@ -122,6 +129,13 @@
 
     &.danger {
       background-color: #dc3545;
+    }
+
+    &:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
   }
 }

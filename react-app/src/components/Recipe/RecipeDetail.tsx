@@ -5,12 +5,13 @@ import "react-image-gallery/styles/css/image-gallery.css";
 import classNames from 'classnames';
 import { useMediaQuery } from 'react-responsive';
 import { Recipe } from 'shared-types';
-import e from 'express';
-import { uploadRecipeImage, deleteRecipeImageByUrl } from '../../hooks/useRecipeQuery';
+// import e from 'express';
+import { useUploadRecipeImage } from '../../hooks/useRecipeQuery';
 import { RiDeleteBin7Fill } from "react-icons/ri";
 import { AiOutlineLoading } from 'react-icons/ai';
 import { FaPlus, FaSave, FaTrash } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
+import { deleteRecipeImageByUrl } from '@/api/recipes';
 
 export type RecipeDetailProps = {
   recipe: Recipe;
@@ -43,7 +44,7 @@ const AddImage: React.FC<Omit<RecipeDetailProps, 'edit'>> = ({ onSave, recipe })
         if (!file) return;
         try {
           setUploading(true);
-          const url = await uploadRecipeImage(file, recipe);
+          const url = await useUploadRecipeImage(file, recipe);
           const updated: Recipe = {
             ...recipe,
             image: recipe.image ? recipe.image : url,
@@ -163,13 +164,11 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, className, edit, on
                       original: img,
                       thumbnail: img,
                       description: `${recipe.name} ${idx + 1}`,
-                      // originalHeight: imageGalleryDim.height,
                       originalWidth: imageGalleryDim.width,
                     }))}
                     showThumbnails={false}
                     showFullscreenButton={false}
                     ref={imageGalleryRef}
-
                   />
                   {
                     edit && (<div className={styles.ImageActions}>

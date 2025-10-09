@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
 import styles from "./Styles.module.scss";
-import { usePublishRecipe, useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames';
 import { FaSave } from 'react-icons/fa';
@@ -9,7 +8,7 @@ import { AiOutlineLoading } from "react-icons/ai";
 import { GrView } from "react-icons/gr";
 import { MdPublish } from "react-icons/md";
 import RecipeDetail from '@/components/Recipe/RecipeDetail';
-import { useUpdateRecipeMutation } from '@/hooks/useRecipeQuery';
+import { useUpdateRecipe, useDeleteRecipe, usePublishRecipe, useRecipeBySlugQuery } from '@/hooks/useRecipeQuery';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Recipe } from 'shared-types';
 import Header from '@/components/Header/Header';
@@ -26,13 +25,15 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
   const location = useLocation();
   const { user } = useAuth();
   const { data: recipeClean, isLoading } = useRecipeBySlugQuery(params.slug || "");
-  const { mutate: updateMutation, isPending: saving } = useUpdateRecipeMutation();
+  const { mutate: updateMutation, isPending: saving } = useUpdateRecipe();
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const navigate = useNavigate();
   const [recipe, setRecipe] = useState<Recipe | undefined | null>(recipeClean);
   const now = useMemo(() => Date.now(), []);
   if (!recipe && recipeClean || (recipeClean?.updatedAt || now) > (recipe?.updatedAt || now)) setRecipe(recipeClean);
   const { mutate: publishRecipe, isPending: publishing } = usePublishRecipe();
+  const { mutate: deleteRecipe, isPending: deleting } = useDeleteRecipe();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // capture current firebase user uid if available
   React.useEffect(() => {
@@ -148,17 +149,15 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
                 left
               }}
             >
-                {publishing ? <i className={styles.Rotating}> <AiOutlineLoading /> </i> : <MdPublish />}
+              {publishing ? <i className={styles.Rotating}> <AiOutlineLoading /> </i> : <MdPublish />}
             </button>
           }
           <button
             className={styles.FloatingEditButton}
-            disabled={publishing || saving}
+            disabled={publishing || saving || deleting}
             aria-label="Delete recipe"
             title="Delete recipe"
-            onClick={() => {
-
-            }}
+            onClick={() => setShowDeleteConfirm(true)}
             style={{
               bottom: 85,
               left
@@ -166,6 +165,32 @@ const RecipePage: React.FC<RecipePageProps> = ({ edit = false, personal = false 
           >
             <RiDeleteBin7Fill />
           </button>
+
+          {/* Delete confirmation modal */}
+          {showDeleteConfirm && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }} onClick={() => setShowDeleteConfirm(false)}>
+              <div style={{ background: 'white', padding: '1rem 1.25rem', borderRadius: 8, minWidth: 280 }} onClick={(e) => e.stopPropagation()}>
+                <h5>Confirm delete</h5>
+                <p>Are you sure you want to permanently delete this recipe?</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                  <button className="btn btn-danger" onClick={async () => {
+                    try {
+                      await deleteRecipe(recipe);
+                      setShowDeleteConfirm(false);
+                      if(personal) navigate('/my/recipes');
+                      else navigate('/recipes');
+                    } catch (err) {
+                      console.error('Delete failed', err);
+                      setShowDeleteConfirm(false);
+                    }
+                  }}>
+                    {deleting ? <i className={styles.Rotating}> <AiOutlineLoading /> </i> : <RiDeleteBin7Fill />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <button
             className={styles.FloatingEditButton}
             disabled={publishing || saving}
