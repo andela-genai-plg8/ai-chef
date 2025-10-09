@@ -259,12 +259,9 @@
         min-height: 300px;
 
         /* react-image-gallery internals: make slides flow and images responsive */
-        :global( .image-gallery-slide img)
-        // .image-gallery-image,
-        // img.image-gallery-image
-        {
+        :global(.image-gallery-slide img) {
           width: 100% !important;
-          height: 500px !important;
+          height: 500px;
           // display: block !important;
           object-fit: cover;
           object-position: center;
@@ -310,6 +307,12 @@
           & > * {
             min-width: calc(100vw - 20px);
             max-width: calc(100vw - 20px);
+          }
+        }
+
+        .RightColumn {
+          :global(.image-gallery-slide img) {
+            height: 300px !important;
           }
         }
       }
