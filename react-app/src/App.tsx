@@ -17,6 +17,7 @@ import RecipeAdd from "@/pages/RecipeAdd/RecipeAdd";
 import { useAppState } from "@/hooks/useAppState";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import NotFound from "./pages/NotFound/NotFound";
+import UserInfo from "./pages/UserInfo/UserInfo";
 
 function App() {
   // load the dictionary
@@ -46,7 +47,7 @@ function App() {
           <Route path="/recipe/:slug/edit" element={<ProtectedRoute><RecipePage edit /></ProtectedRoute>} />
           <Route path="/recipes/:slug" element={<RecipePage />} />
           <Route path="/restaurant/:slug" element={<ProtectedRoute><RestaurantPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><div>Settings page coming soon!</div></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><UserInfo /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

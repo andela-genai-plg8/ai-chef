@@ -9,7 +9,6 @@ function Home() {
   const { data: featuredRecipes, isLoading, refetch } = usePromotedRecipesQuery();
 
   React.useEffect(() => {
-    console.log('featuredRecipes', featuredRecipes);
     if (!featuredRecipes || featuredRecipes.length === 0 || !isLoading) {
       refetch();
     }

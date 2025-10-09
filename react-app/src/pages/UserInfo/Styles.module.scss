@@ -1,0 +1,7 @@
+@import "@/index.module.scss";
+
+.UserInfo {
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
