@@ -98,9 +98,9 @@ const AllRecipes: React.FC<AllRecipesProps> = ({ personal = false }) => {
 
   return (
     <div className={styles.AllRecipes}>
-      <Header personal={personal} title="All Recipes" />
+      <Header personal={personal} title={!user?.uid ? "All Recipes" : ""} />
       {
-        filterByUser && !isLoading && allRecipes.length === 0 && <div className={styles.RecipeList}><p>You have not added recipes yet.</p></div>
+        filterByUser && !isLoading && allRecipes.length === 0 && <div className={styles.NoRecipes}><p>You have not added recipes yet.</p></div>
       }
       <RecipeList className={styles.RecipeList} personal={personal} recipeList={allRecipes} loading={isLoading} noMoreItems={endOfList} onGetMoreRecipes={handleGetMoreRecipes} />
     </div>

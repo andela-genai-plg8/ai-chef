@@ -7,11 +7,16 @@
   min-height: 100vh;
   max-height: 100vh;
   overflow-y: scroll;
+  align-items: flex-start;
 
+  .NoRecipes,
   .RecipeList {
     @extend .px-3;
     @extend .py-3;
     background-color: #efefef;
+    overflow-y: auto;
+  }
+  .RecipeList {
     height: calc(100vh - 120px);
     overflow-y: auto;
   }
