@@ -1,12 +1,18 @@
 import styles from "./Styles.module.scss";
-import Search from '@/components/Search/Search';
 import RobotChef from '@/assets/Robot Chef.gif';
 import RecipeList from '@/components/Recipe/RecipeList';
 import { usePromotedRecipesQuery } from '@/hooks/useRecipeQuery';
+import React from "react";
 import { Link } from 'react-router-dom';
 
 function Home() {
-  const { data: featuredRecipes, isLoading } = usePromotedRecipesQuery();
+  const { data: featuredRecipes, isLoading, refetch } = usePromotedRecipesQuery();
+
+  React.useEffect(() => {
+    if (!featuredRecipes || featuredRecipes.length === 0 || !isLoading) {
+      refetch();
+    }
+  }, [refetch, isLoading]);
 
   return (
     <div className={styles.Home} style={{ backgroundImage: `url(${RobotChef})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -14,7 +20,7 @@ function Home() {
       {/* Welcome Message */}
       <div className={styles.WelcomeMessage}>
         <h1>Welcome to Chef Andel!</h1>
-        <p>Your ultimate destination for discovering mouthwatering recipes and culinary inspiration. Let’s cook something amazing today!</p>
+        <p>Your ultimate destination for discovering mouthwatering recipes and culinary inspiration. Let's cook something amazing today!</p>
       </div>
 
       {/* Featured Recipes Section */}
@@ -24,7 +30,7 @@ function Home() {
           <p>Loading...</p>
         ) : (
           <>
-            <RecipeList recipeList={featuredRecipes} />
+            <RecipeList recipeList={featuredRecipes} collapseOnMobile />
             <Link to="/recipes" className={styles.MoreLink}>More</Link>
           </>
         )}

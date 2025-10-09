@@ -110,15 +110,50 @@
     }
   }
 
+  &.Horizontal {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* momentum on iOS */
+    scroll-behavior: smooth;
+    gap: 1rem;
+    padding: 0 10px;
+
+    /* Make each card occupy the viewport width (minus padding) and snap into place */
+    .RecipeCard {
+      flex: 0 0 calc(100vw - 40px);
+      width: calc(100vw - 20px) !important;
+      scroll-snap-align: start;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: 0px !important;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    /* Hide native scrollbars while preserving scrollability */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+
+    &::-webkit-scrollbar {
+      height: 0; /* WebKit: horizontal scrollbar height */
+      background: transparent;
+    }
+  }
+
   .LoadMore {
     grid-column: 1/-1;
   }
 }
 
 .RecipeDetail {
-  height: 100vh;
+  height: auto;
   min-height: 100vh;
-  max-height: 100vh;
   padding-bottom: 2rem;
   background: linear-gradient(to bottom, #ffffff, #f8f9fa);
   overflow-y: scroll;
@@ -126,11 +161,7 @@
 
   // Tabs
   .TabsContainer {
-    // width: 100%;
-    // margin: 0 auto 2rem auto;
     background: white;
-    // border-radius: 16px;
-    // box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 
     .TabsRow {
       display: flex;
@@ -191,61 +222,11 @@
   }
 
   .TopColumns {
-    @extend .px-3;
-
     display: flex;
     flex-direction: row;
     gap: 2.5rem;
     align-items: flex-start;
     margin-bottom: 2rem;
-
-    @include m.media-breakpoint-down(sm) {
-      flex-direction: column;
-      flex-flow: column-reverse;
-      overflow-x: hidden;
-      max-width: 100%;
-    }
-
-    // .LeftColumn {
-    //   flex: 2;
-    //   min-width: 280px;
-    //   max-width: 480px;
-    //   display: flex;
-    //   flex-direction: column;
-    //   gap: 1.2rem;
-
-    //   .Section {
-    //     background: #fff;
-    //     border-radius: 16px;
-    //     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    //     padding: 2rem;
-    //     margin-bottom: 2rem;
-    //     border: 1px solid rgba(0, 0, 0, 0.05);
-
-    //     &.Ingredients {
-    //       background-color: inherit;
-    //     }
-
-    //     h2 {
-    //       font-size: 1.5rem;
-    //       font-weight: 700;
-    //       color: #2c3e50;
-    //       margin-bottom: 1.5rem;
-    //       position: relative;
-
-    //       &::after {
-    //         content: "";
-    //         position: absolute;
-    //         bottom: -8px;
-    //         left: 0;
-    //         width: 40px;
-    //         height: 3px;
-    //         background: linear-gradient(to right, #fd7e14, #e74c3c);
-    //         border-radius: 2px;
-    //       }
-    //     }
-    //   }
-    // }
 
     .CenterColumn {
       flex: 0.5;
@@ -267,23 +248,22 @@
       // border: 1px solid red;
 
       .ImageGallery {
-        @extend .shadow;
+        // @extend .shadow;
         width: 100%;
         /* let the image determine the height so aspect ratio is preserved */
         display: block;
         position: relative;
-        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
-        border-radius: 32px;
+        // background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
+        // border-radius: 32px;
         min-height: 300px;
 
         /* react-image-gallery internals: make slides flow and images responsive */
-        .image-gallery-slide,
-        .image-gallery-image,
-        img.image-gallery-image {
+        :global(.image-gallery-slide img) {
           width: 100% !important;
-          height: auto !important;
-          display: block !important;
+          height: 500px;
+          // display: block !important;
           object-fit: cover;
+          object-position: center;
         }
 
         /* wrapper should expand to the image height */
@@ -292,8 +272,7 @@
         }
 
         /* center Add button inside the gallery */
-        .RemoveButton,
-        .AddButton {
+        .ImageActions {
           position: absolute;
           bottom: 12px;
           left: 50%;
@@ -301,6 +280,39 @@
           align-self: center;
           margin: 0;
           z-index: 20;
+        }
+      }
+    }
+
+    @include m.media-breakpoint-down(sm) {
+      & {
+        flex-direction: column;
+        flex-flow: column-reverse;
+        overflow: visible;
+        max-width: 100%;
+        padding: 0px !important;
+
+        .RightColumn,
+        .CenterColumn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 100%;
+          max-width: 100%;
+          width: 100%;
+          // padding-left: 10px;
+          // padding-right: 10px;
+          & > * {
+            min-width: calc(100vw - 20px);
+            max-width: calc(100vw - 20px);
+          }
+        }
+
+        .RightColumn {
+          :global(.image-gallery-slide img) {
+            height: 300px !important;
+          }
         }
       }
     }
@@ -401,8 +413,12 @@
     margin-bottom: 1.5rem;
     line-height: 1.6;
     font-weight: 400;
-    p {
-      text-align: left;
+    resize: vertical;
+    width: 100%;
+    outline: none;
+    & textarea {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
     }
   }
 
@@ -454,9 +470,26 @@
       .IngredientItem {
         @extend .p-md-3;
         @extend .py-md-4;
-        @extend .p-1;
+        @extend .p-2;
         @extend .py-2;
         @extend .shadow;
+        cursor: pointer;
+        text-align: left;
+
+        &.NewIngredient {
+          background: #e9ecef;
+          border: 2px dashed #ced4da;
+          color: #6c757d;
+          font-style: italic;
+          text-align: center;
+          cursor: pointer;
+
+          &:hover {
+            background: #dee2e6;
+            border-color: #adb5bd;
+            color: #495057;
+          }
+        }
 
         display: flex;
         justify-content: space-between;
@@ -579,4 +612,52 @@
       }
     }
   }
+}
+
+/* Modal styles for Add Ingredient */
+.ModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.Modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  width: 460px;
+  max-width: calc(100% - 32px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.Field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  input {
+    @extend .form-control;
+    border-radius: 8px;
+  }
+}
+
+.ModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }

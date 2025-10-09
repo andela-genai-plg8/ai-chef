@@ -1,0 +1,84 @@
+@use "@/index.module.scss" as *;
+
+.Form {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+  max-width: 920px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.Section {
+  margin-bottom: 1.2rem;
+}
+
+.Row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.RowWrap {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  @extend .form-control;
+  margin-top: 0.35rem;
+  border-radius: 8px;
+}
+
+.CheckList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.CheckList label {
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.Consent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.Error {
+  color: #d9534f;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.Actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* small responsive tweaks */
+@media (max-width: 720px) {
+  .Row { flex-direction: column; }
+  .RowWrap { flex-direction: column; }
+  .Form { padding: 1rem; }
+}

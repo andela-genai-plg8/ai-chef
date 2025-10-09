@@ -15,3 +15,12 @@ export type SupportedModels = {
     models: Model[];
   };
 };
+
+export type AppUserData = {
+  id: string;
+  email: string;
+  roles?: string[];
+  createdAt?: any;
+  lastLoginAt?: any;
+  lastLogoutAt?: any;
+};

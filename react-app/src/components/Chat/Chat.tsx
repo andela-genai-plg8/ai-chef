@@ -26,7 +26,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 
           // If it's an internal link (relative URL), use React Router <Link>
           if (href.startsWith("/")) {
-            return <Link to={href}>{props.children}</Link>;
+            return <Link className={styles.Link} to={href}>{props.children}</Link>;
           }
 
           // Otherwise, fall back to normal <a>
@@ -61,7 +61,6 @@ const Chat = () => {
   const searchedRecipes = useRecipes((state) => state.searchedRecipes);
   const currentModel = useChat((state) => state.currentModel);
   const setCurrentModel = useChat((state) => state.setCurrentModel);
-  // const supportedModels = useChat((state) => state.supportedModels);
   const sendMessage = useChat((state) => state.sendMessage);
   const addMessage = useChat((state) => state.addMessage);
 
@@ -69,8 +68,7 @@ const Chat = () => {
   const chunksRef = useRef<Blob[]>([]);
 
   const { data: { modelsByProviders: supportedModels, models } = { models: [], modelsByProviders: {} }, isLoading: isLoadingModels } = useModels(true);
-  // const supportedModels = modelsByProviders;
-
+ 
   useEffect(() => {
     if (open && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -276,15 +274,7 @@ const Chat = () => {
           <FaTimes />
         </button>
       </div>
-      {/* <div className={styles.ModelDropdown}>
-        <select
-          className={styles.FormSelect}
-          value={currentModel}
-          onChange={(e) => setCurrentModel(e.target.value)}
-        >
-          {renderModelDropdown}
-        </select>
-      </div> */}
+      
       <div
         className={styles.MessageContainer}
         ref={messageContainerRef}

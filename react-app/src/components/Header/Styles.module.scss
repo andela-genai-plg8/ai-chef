@@ -1,0 +1,73 @@
+@use "@/index.module.scss" as *;
+@use "@/styles/mixins" as m;
+
+.Header {
+  height: var(--heading-height);
+  // max-height: var(--heading-height);
+  position: sticky;
+  overflow: hidden;
+
+  top: 0;
+  z-index: 100;
+  background-color: #ffffff;
+
+  .HeaderContainer {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    align-items: center;
+    height: 100px;
+    width: 100%;
+    max-width: 100%;
+    @extend .p-2;
+
+    .TopMenu {
+      grid-column-start: 1;
+      grid-column-end: 4;
+      grid-row-start: 1;
+      height: 100%;
+      justify-content: flex-start;
+      z-index: 1000;
+    }
+
+    .Title {
+      h1 {
+        @extend .text-primary;
+      }
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      grid-column-start: 1;
+      grid-column-end: 9;
+      grid-row-start: 1;
+      height: 100%;
+    }
+
+    @include m.media-breakpoint-down(sm) {
+      &.HeaderContainer {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 10px 10px;
+        justify-content: center;
+
+        .TopMenu {
+          // width: calc(100% - 20px);
+        }
+
+        .Title {
+          // margin-bottom: 10px;
+          font-size: 0.5rem;
+        }
+      }
+    }
+  }
+
+  .Search {
+    @extend .px-3;
+    @extend .py-1;
+    height: var(--heading-height);
+    max-height: var(--heading-height);
+    overflow-y: visible;
+    overflow-x: visible;
+  }
+}

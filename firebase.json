@@ -17,6 +17,10 @@
         "function": "parseRecipe"
       },
       {
+        "source": "/api/publishRecipe",
+        "function": "publishRecipe"
+      },
+      {
         "source": "/api/findRecipe",
         "function": "findRecipe"
       },

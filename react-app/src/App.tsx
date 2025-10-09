@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import Chat from "./components/Chat/Chat";
 // Import the project's SCSS which includes Bootstrap with our variable overrides
@@ -17,10 +17,12 @@ import RecipeAdd from "@/pages/RecipeAdd/RecipeAdd";
 import { useAppState } from "@/hooks/useAppState";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import NotFound from "./pages/NotFound/NotFound";
+import UserInfo from "./pages/UserInfo/UserInfo";
 
 function App() {
   // load the dictionary
   const { loadWords } = useAppState();
+  const [sidebarWidth, setSidebarWidth] = useState<number>(70); // default matching CSS
 
   useEffect(() => {
     loadWords();
@@ -28,10 +30,10 @@ function App() {
 
   return (
     <div className={styles.App} style={{ minHeight: "100vh", width: "100vw" }}>
-      {/* Sidebar */}
-      <Sidebar className={styles.Sidebar} />
+  {/* Sidebar */}
+  <Sidebar className={styles.Sidebar} onWidthChange={(w) => setSidebarWidth(w)} />
       {/* Main Content */}
-      <main className={`${styles.MainContent} flex-grow-1 d-flex align-items-start justify-content-center bg-light`} style={{ minHeight: "100vh", width: "calc(100vw - 70px)" }}>
+  <main className={styles.MainContent} style={{ minHeight: '100vh', width: `calc(100vw - ${sidebarWidth}px)` }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -39,11 +41,13 @@ function App() {
           <Route path="/recipes/new" element={<ProtectedRoute><RecipeAdd /></ProtectedRoute>} />
           <Route path="/recipes/search" element={<RecipeResults />} />
           <Route path="/my/recipes" element={<ProtectedRoute><AllRecipes personal /></ProtectedRoute>} />
-          <Route path="/my/recipe/:slug" element={<ProtectedRoute><RecipePage /></ProtectedRoute>} />
+          <Route path="/my/recipe/:slug" element={<ProtectedRoute><RecipePage personal /></ProtectedRoute>} />
+          <Route path="/my/recipe/:slug/edit" element={<ProtectedRoute><RecipePage edit personal /></ProtectedRoute>} />
           <Route path="/recipe/:slug" element={<RecipePage />} />
+          <Route path="/recipe/:slug/edit" element={<ProtectedRoute><RecipePage edit /></ProtectedRoute>} />
           <Route path="/recipes/:slug" element={<RecipePage />} />
           <Route path="/restaurant/:slug" element={<ProtectedRoute><RestaurantPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><div>Settings page coming soon!</div></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><UserInfo /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -29,7 +29,7 @@
     justify-content: center;
     align-items: center;
 
-    .SignInBox {
+    .LoginBox {
       max-width: 400px;
       width: 400px;
       padding: 2rem;
@@ -71,4 +71,13 @@
       border-radius: 50%;
     }
   }
+
+  // .LoginBox {
+  //   max-width: 400px;
+  //   width: 400px;
+  //   padding: 2rem;
+  //   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  //   border-radius: 12px;
+  //   background: #fff;
+  // }
 }

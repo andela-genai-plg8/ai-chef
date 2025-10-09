@@ -36,6 +36,9 @@ export type Recipe = {
   updatedAt?: Date;
   createdBy?: string;
   updatedBy?: string;
+  publishedAt?: Date;
+  queued?: boolean;
   published?: boolean;
   hasVectors?: boolean;
+  related: string[];
 };
