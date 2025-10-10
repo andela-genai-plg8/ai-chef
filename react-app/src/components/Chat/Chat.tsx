@@ -78,7 +78,7 @@ const Chat = () => {
     deviceId: selectedDeviceId,
     onStop: async (blob) => {
       try {
-        const isRecordingEmpty = checkIfAudioIsSilent(blob);
+        const isRecordingEmpty = await checkIfAudioIsSilent(blob);
         if (!isRecordingEmpty) {
           const formData = new FormData();
           formData.append("file", blob, "recording.webm");
@@ -349,22 +349,23 @@ const Chat = () => {
           ))}
         <div ref={messagesEndRef} />
       </div>
+      {!isRecording &&
+        <button
 
-      <button
-
-        className={styles.DeviceToggle}
-        style={{ position: 'fixed', zIndex: 50000, ...togglePosition }}
-        aria-haspopup="true"
-        aria-expanded={Boolean(false)}
-        onClick={(e) => {
-          e.stopPropagation();
-          refreshInputDevices();
-          setShowDevices((s) => !s);
-        }}
-        ref={(el) => { deviceButtonRef.current = el; }}
-      >
-        <FaChevronUp />
-      </button>
+          className={styles.DeviceToggle}
+          style={{ position: 'fixed', zIndex: 50000, ...togglePosition }}
+          aria-haspopup="true"
+          aria-expanded={Boolean(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            refreshInputDevices();
+            setShowDevices((s) => !s);
+          }}
+          ref={(el) => { deviceButtonRef.current = el; }}
+        >
+          <FaChevronUp />
+        </button>
+      }
 
 
       {/* Device selector popover */}
@@ -396,9 +397,7 @@ const Chat = () => {
           </div>
         )}
       </div>
-      <div className={styles.StatusBar}>
-        {isRecording && <span className={styles.RecordingIndicator}>● Recording{isSilent ? " (silent)" : ""} {signalLevelDb !== null ? `(${signalLevelDb} dB)` : ""}</span>}
-      </div>
+
       <div className={styles.InputGroup}
         style={{ height: (containerHeight), maxHeight: maxInputHeight }}
         ref={chatTextContainerRef}
@@ -419,14 +418,15 @@ const Chat = () => {
             user &&
             <button
               ref={pushTalkRef}
-              className={styles.SpeechButton}
+              className={classNames(styles.SpeechButton, { [styles.Active]: isRecording })}
               onClick={() => toggle().catch((e) => console.error("toggle failed", e))}
               disabled={loading}
               aria-label={isRecording ? "Stop recording" : "Listen"}
               title={isRecording ? "Stop" : "Push to talk"}
             >
               {isRecording ? <FaStop /> : <FaMicrophone />}
-            </button>}
+            </button>
+          }
           <button
             className={styles.SendButton}
             onClick={handleSend}

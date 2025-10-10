@@ -27,7 +27,6 @@ export function useAudioRecorder(opts: UseAudioRecorderOptions = {}) {
   const [signalLevelDb, setSignalLevelDb] = useState<number | null>(null);
   const [isSilent, setIsSilent] = useState<boolean>(false);
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[] | null>(null);
-  const [isRecordingEmpty, setIsRecordingEmpty] = useState<boolean>(false);
 
   const checkIfAudioIsSilent = async (blob: Blob) => {
     const arrayBuffer = await blob.arrayBuffer();
@@ -105,16 +104,9 @@ export function useAudioRecorder(opts: UseAudioRecorderOptions = {}) {
       };
 
       mrec.onstop = async () => {
+        setIsRecording(false);
         const blob = new Blob(chunksRef.current, { type: chosen || "audio/webm" });
         chunksRef.current = [];
-
-        console.log(`🎙️ Recorded size: ${blob.size} bytes`);
-        if (blob.size < 1000) {
-          setIsRecordingEmpty(true);
-          console.warn("⚠️ Recording is empty or too short.");
-        } else {
-          console.log("✅ Recording contains data.");
-        }
 
         const url = URL.createObjectURL(blob);
         // expose URL for UI playback controls and diagnostics
@@ -187,7 +179,6 @@ export function useAudioRecorder(opts: UseAudioRecorderOptions = {}) {
           }
         } catch (e) { /**/ }
 
-        setIsRecording(false);
       };
 
       recorderRef.current = mrec;
