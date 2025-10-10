@@ -8,9 +8,10 @@ import classNames from "classnames";
 import { useModels } from "@/hooks/useRecipeQuery";
 import { Model } from "shared-types";
 import { Link } from "react-router-dom";
-import { FaMicrophone, FaSpeakap, FaTimes } from "react-icons/fa";
+import { FaChevronUp, FaMicrophone, FaStop, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
+import useAudioRecorder from "@/hooks/useAudioRecorder";
 
 type ChatMessageProps = {
   msg: { content: string; role: string };
@@ -38,7 +39,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg, className }) => {
 };
 
 const Chat = () => {
-  let [input, setInput] = useState("");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   // Persisted open state (default: true). Guard access for SSR.
@@ -63,12 +64,114 @@ const Chat = () => {
   const setCurrentModel = useChat((state) => state.setCurrentModel);
   const sendMessage = useChat((state) => state.sendMessage);
   const addMessage = useChat((state) => state.addMessage);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>(() => {
+    try {
+      if (typeof window === 'undefined') return undefined;
+      const stored = localStorage.getItem('chat.selectedDeviceId');
+      return stored === null ? undefined : stored;
+    } catch (e) {
+      return undefined;
+    }
+  });
 
-  const [recorder, setRecorder] = useState<MediaRecorder|null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const { toggle, checkIfAudioIsSilent, isRecording, inputDevices, refreshInputDevices, isSilent, signalLevelDb } = useAudioRecorder({
+    deviceId: selectedDeviceId,
+    onStop: async (blob) => {
+      try {
+        const isRecordingEmpty = checkIfAudioIsSilent(blob);
+        if (!isRecordingEmpty) {
+          const formData = new FormData();
+          formData.append("file", blob, "recording.webm");
+
+          const speechResponse = await axios.post(
+            "/api/speechToText",
+            formData,
+            { headers: { "Content-Type": "multipart/form-data" } }
+          );
+          const speechResponseData = speechResponse.data;
+          const speechMessage = speechResponseData?.speechMessage || "";
+
+          if (!speechMessage?.trim()) return;
+          setInput(speechMessage);
+          setLoading(true);
+          addMessage({ role: "user", content: speechMessage });
+          await sendMessage();
+          setInput("");
+          setLoading(false);
+          if (inputRef.current) inputRef.current.focus();
+        }
+      } catch (err) {
+        console.error("Error processing recorded audio:", err);
+        setLoading(false);
+      }
+    }
+  });
+
+  const [showDevices, setShowDevices] = useState<boolean>(false);
+
+  // Persist selected device id when it changes
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (selectedDeviceId) {
+        localStorage.setItem('chat.selectedDeviceId', selectedDeviceId);
+      } else {
+        localStorage.removeItem('chat.selectedDeviceId');
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [selectedDeviceId]);
+
+  // If the selected device disappears from the available list, clear it so we fall back to default
+  useEffect(() => {
+    if (!inputDevices) return;
+    if (!selectedDeviceId) return;
+    const found = inputDevices.find((d) => d.deviceId === selectedDeviceId);
+    if (!found) {
+      setSelectedDeviceId(undefined);
+    }
+  }, [inputDevices, selectedDeviceId]);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const chatTextContainerRef = useRef<HTMLDivElement | null>(null);
+  const pushTalkRef = useRef<HTMLButtonElement | null>(null);
+  const deviceButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [togglePosition, setTogglePosition] = useState<React.CSSProperties>({});
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!showDevices) return;
+      if (popoverRef.current && popoverRef.current.contains(target)) return;
+      if (deviceButtonRef.current && deviceButtonRef.current.contains(target)) return;
+      setShowDevices(false);
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDevices(false);
+    };
+
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showDevices]);
+
+  useEffect(() => {
+    if (!chatTextContainerRef.current) return;
+    if (!pushTalkRef.current) return;
+    if (!deviceButtonRef.current) return;
+
+    const pushTalk = pushTalkRef.current.getBoundingClientRect();
+
+    setTogglePosition({ top: chatTextContainerRef.current.getBoundingClientRect().top - 15, left: pushTalk.left - (((deviceButtonRef.current?.clientWidth || 0) - pushTalk.width) / 2) });
+
+  }, [chatTextContainerRef.current, pushTalkRef.current, deviceButtonRef.current]);
 
   const { data: { modelsByProviders: supportedModels, models } = { models: [], modelsByProviders: {} }, isLoading: isLoadingModels } = useModels(true);
- 
+
   useEffect(() => {
     if (open && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -105,15 +208,6 @@ const Chat = () => {
     const h = container.clientHeight || 0;
     setMaxInputHeight(Math.max(80, Math.floor(h * 0.3)));
   }, [messages]);
-
-  const startListening = async () => {
-    await initRecorder();
-    recorder && recorder.start();
-  }
-
-  const handleVoiceSend = async () => {
-    recorder && recorder.state === "recording" && recorder.stop();
-  };
 
   const handleSend = async () => {
     setLoading(true);
@@ -210,6 +304,8 @@ const Chat = () => {
     }
   }, [searchedRecipes, open]);
 
+  // cleanup is handled by the hook
+
   // Floating widget toggle button
   if (!open) {
     return (
@@ -219,48 +315,6 @@ const Chat = () => {
     );
   }
 
-  const initRecorder = async () => {
-    if (!recorder) {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-
-      mediaRecorder.ondataavailable = (e) => {
-        chunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        chunksRef.current = [];
-
-        const formData = new FormData();
-        formData.append("file", blob, "recording.webm");
-
-        const speechResponse = await axios.post(
-          "/api/speechToText",
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
-        var speechResponseData = speechResponse.data;
-        input = speechResponseData.speechMessage;
-        setInput(input);
-        setLoading(true);
-        if (!input?.trim()) {
-          setLoading(false);
-          return;
-        }
-
-        addMessage({ role: "user", content: input });
-        await sendMessage();
-        setInput("");
-        setLoading(false);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      };
-
-      setRecorder(mediaRecorder);
-    }
-  };
 
   return (
     <div className={styles.Chat}>
@@ -274,7 +328,7 @@ const Chat = () => {
           <FaTimes />
         </button>
       </div>
-      
+
       <div
         className={styles.MessageContainer}
         ref={messageContainerRef}
@@ -295,8 +349,60 @@ const Chat = () => {
           ))}
         <div ref={messagesEndRef} />
       </div>
+
+      <button
+
+        className={styles.DeviceToggle}
+        style={{ position: 'fixed', zIndex: 50000, ...togglePosition }}
+        aria-haspopup="true"
+        aria-expanded={Boolean(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          refreshInputDevices();
+          setShowDevices((s) => !s);
+        }}
+        ref={(el) => { deviceButtonRef.current = el; }}
+      >
+        <FaChevronUp />
+      </button>
+
+
+      {/* Device selector popover */}
+      <div style={{ position: 'relative' }}>
+        {showDevices && (
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-label="Audio input settings"
+            style={{
+              position: 'absolute',
+              right: 0,
+              bottom: 'calc(100% + 8px)',
+              width: 320,
+              background: 'white',
+              borderRadius: 8,
+              boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+              zIndex: 1200,
+              cursor: 'pointer',
+            }}
+          >
+            <ul className={styles["list-group"]}>
+              {inputDevices && inputDevices.map((d) => (
+                <li
+                  onClick={() => { setSelectedDeviceId(d.deviceId || undefined); setShowDevices(false); }}
+                  className={classNames(styles["list-group-item"], { [styles["active"]]: d.deviceId === selectedDeviceId })} key={d.deviceId} value={d.deviceId}>{d.label || d.deviceId}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+      <div className={styles.StatusBar}>
+        {isRecording && <span className={styles.RecordingIndicator}>● Recording{isSilent ? " (silent)" : ""} {signalLevelDb !== null ? `(${signalLevelDb} dB)` : ""}</span>}
+      </div>
       <div className={styles.InputGroup}
-        style={{ height: (containerHeight), maxHeight: maxInputHeight }}>
+        style={{ height: (containerHeight), maxHeight: maxInputHeight }}
+        ref={chatTextContainerRef}
+      >
         <textarea
           rows={1}
           className={styles.Input}
@@ -306,28 +412,21 @@ const Chat = () => {
           onKeyDown={handleKeyDown}
           disabled={loading}
           ref={inputRef}
-          style={{ maxHeight: maxInputHeight, height: 22 }}
+          style={{ maxHeight: maxInputHeight, height: 22, minHeight: 22 }}
         />
         <div className={styles.Buttons}>
           {
             user &&
             <button
-            className={styles.SpeechButton}
-            onMouseDown={startListening}
-            onTouchStart={startListening}
-            onMouseUp={handleVoiceSend}
-            onMouseLeave={handleVoiceSend}
-            onTouchEnd={handleVoiceSend}
-            disabled={loading}
-            aria-label="Listen"
-            title="Push to talk"
-          >
-            {loading ? (
-              "..."
-            ) : (
-              <FaMicrophone />
-            )}
-          </button>}
+              ref={pushTalkRef}
+              className={styles.SpeechButton}
+              onClick={() => toggle().catch((e) => console.error("toggle failed", e))}
+              disabled={loading}
+              aria-label={isRecording ? "Stop recording" : "Listen"}
+              title={isRecording ? "Stop" : "Push to talk"}
+            >
+              {isRecording ? <FaStop /> : <FaMicrophone />}
+            </button>}
           <button
             className={styles.SendButton}
             onClick={handleSend}

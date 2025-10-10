@@ -19,6 +19,13 @@
     max-width: calc(100% - 16px);
   }
 
+  .PlaybackArea {
+    position: relative;
+    z-index: 50000;
+    color: red;
+    border: 1px solid black;
+  }
+
   .Header {
     h5 {
       @extend .py-3;
@@ -129,6 +136,26 @@
     }
   }
 
+  .DeviceAndAudio {
+    position: relative;
+    z-index: 5000;
+    color: red;
+    border: 1px solid black;
+  }
+
+  .DeviceToggle {
+    padding: 1px;
+    position: absolute;
+    font-size: 8px;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    background-color: #fff;
+    width: 60px;
+    border-top-left-radius: 50%;
+    border-top-right-radius: 50%;
+    color: #048063b7;
+  }
+
   .ModelDropdown {
     margin-bottom: 0.5rem;
     padding: 0 1rem;
@@ -210,6 +237,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        color: #ffffff;
         background: linear-gradient(135deg, #fd7e14, #e74c3c);
         &:hover {
           background: linear-gradient(135deg, #e74c3c, #fd7e14);
@@ -234,9 +262,10 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: linear-gradient(135deg, #14fdc7b7, #44eb11);
+        color: #ffffff;
+        background: linear-gradient(135deg, #048063b7, #44eb11);
         &:hover {
-          background: linear-gradient(135deg, #44eb11, #14fdc7b7);
+          background: linear-gradient(135deg, #44eb11, #048063b7);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
