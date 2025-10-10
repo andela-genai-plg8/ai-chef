@@ -25,6 +25,10 @@
         "function": "findRecipe"
       },
       {
+        "source": "/api/speechToText",
+        "function": "speechToText"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

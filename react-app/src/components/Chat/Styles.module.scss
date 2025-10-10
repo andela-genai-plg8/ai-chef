@@ -19,6 +19,13 @@
     max-width: calc(100% - 16px);
   }
 
+  .PlaybackArea {
+    position: relative;
+    z-index: 50000;
+    color: red;
+    border: 1px solid black;
+  }
+
   .Header {
     h5 {
       @extend .py-3;
@@ -48,9 +55,9 @@
     @extend .d-flex;
     @extend .flex-column;
     @extend .border;
-    @extend .rounded;
+    // @extend .rounded;
     @extend .p-2;
-    @extend .mb-2;
+    // @extend .mb-2;
     @extend .bg-light;
     min-height: 500px;
     max-height: 500px;
@@ -88,7 +95,7 @@
         @extend .text-white;
         word-break: break-word; // ensure long URLs break
         font-weight: bolder;
-        text-decoration: none
+        text-decoration: none;
       }
 
       &.Assistant {
@@ -127,6 +134,26 @@
         }
       }
     }
+  }
+
+  .DeviceAndAudio {
+    position: relative;
+    z-index: 5000;
+    color: red;
+    border: 1px solid black;
+  }
+
+  .DeviceToggle {
+    padding: 1px;
+    position: absolute;
+    font-size: 8px;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    background-color: #fff;
+    width: 60px;
+    border-top-left-radius: 50%;
+    border-top-right-radius: 50%;
+    color: #048063b7;
   }
 
   .ModelDropdown {
@@ -210,6 +237,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        color: #ffffff;
         background: linear-gradient(135deg, #fd7e14, #e74c3c);
         &:hover {
           background: linear-gradient(135deg, #e74c3c, #fd7e14);
@@ -219,6 +247,13 @@
         &:active {
           transform: translateY(1px);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &:disabled {
+          background: #6c757d;
+          cursor: not-allowed;
+          box-shadow: none;
+          transform: none;
         }
       }
 
@@ -234,15 +269,91 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: linear-gradient(135deg, #14fdc7b7, #44eb11);
+        color: #ffffff;
+        background: linear-gradient(135deg, #048063b7, #44eb11);
         &:hover {
-          background: linear-gradient(135deg, #44eb11, #14fdc7b7);
+          background: linear-gradient(135deg, #44eb11, #048063b7);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
-        &:active {
+        &.Active {
+          background: linear-gradient(135deg, red, orange) !important;
+
+          &:hover {
+            background: linear-gradient(135deg, orange, red);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          }
+
           transform: translateY(1px);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &:disabled {
+          background: #6c757d;
+          cursor: not-allowed;
+          box-shadow: none;
+          transform: none;
+        }
+      }
+    }
+  }
+
+  .StatusBar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3px;
+    background-color: red;
+    padding: 0px;
+    margin: 0px;
+
+    /* Gradient status bar that radiates from the center. Uses CSS variables set inline: --signal-pct (e.g. "60%") and --signal-hue (0..120) */
+    .StatusBarGradient {
+      width: var(--signal-pct, 50%);
+      height: 5px;
+      border-radius: 3px;
+      margin: 6px 0 8px 0;
+      overflow: hidden;
+      background: radial-gradient(
+        circle at center,
+        hsl(var(--signal-hue, 120), 70%, 45%) var(--signal-pct, 50%),
+        rgba(255, 255, 255, 0) calc(var(--signal-pct, 50%) + 12%)
+      );
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.06);
+      transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), background 240ms linear repeat, width 240ms ease;
+      will-change: background, opacity;
+      position: relative;
+
+      /* animated overlay that changes width/scale to give a continuous motion */
+      &::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        height: 100%;
+        width: var(--signal-pct, 50%);
+        transform: translateX(-50%) scaleX(0.85);
+        transform-origin: center;
+        /* softer overlay color to complement the base gradient */
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 50%), hsl(var(--signal-hue, 120) 70% 45% / 0.9);
+        filter: blur(6px);
+        opacity: 0.95;
+        pointer-events: none;
+        animation: status-pulse var(--pulse-duration, 1.6s) ease-in-out infinite;
+        transition: width 220ms linear, opacity 160ms linear, background 240ms linear;
+        will-change: transform, width, opacity;
+      }
+
+      @keyframes status-pulse {
+        0% {
+          transform: translateX(-50%) scaleX(0.75);
+        }
+        50% {
+          transform: translateX(-50%) scaleX(1.05);
+        }
+        100% {
+          transform: translateX(-50%) scaleX(0.75);
         }
       }
     }
