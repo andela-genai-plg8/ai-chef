@@ -97,7 +97,9 @@ export const speechToText = functions.https.onRequest((req: Request, res: Respon
       }
       // Create a File-like object (supported by OpenAI SDK)
       const buffer = Buffer.concat(chunks);
-      const f = new File([buffer], info.filename, { type: "audio/webm" });
+      const f = new File([buffer], info.filename, { type: "audio/webm" });      
+
+      // send to OpenAI for transcription
       const resp = await client.audio.transcriptions.create({
         file: f,
         model: "gpt-4o-mini-transcribe",
