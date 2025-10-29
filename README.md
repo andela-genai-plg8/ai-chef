@@ -37,4 +37,14 @@ A modern web application that helps users discover, cook, and order delicious me
 
 ---
 
+## Demo
+
+Click the image below to watch a short screencast demo:
+
+[![Watch the screencast](assets/screencast-thumbnail.png)](https://app.screencast.com/vp3p3IHwQ0pW6/e)
+
+If you don't have the thumbnail image uploaded to the repository, you can use this direct link to open the screencast:
+
+[Watch the screencast demo](https://app.screencast.com/vp3p3IHwQ0pW6/e)
+
 This app is designed to make meal planning, cooking, and ordering as seamless and enjoyable as possible. Contributions and feedback are welcome!
